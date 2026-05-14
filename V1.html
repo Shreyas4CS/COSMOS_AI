@@ -387,38 +387,14 @@ function detectMath(txt) {
   return null;
 }
 
-// ========== CUSTOM KB LOOKUP (trained data — checked first, always) ==========
-function lookupCustomKB(txt) {
-  const low = txt.toLowerCase().trim();
-  // Exact or partial match on question/keyword
-  for(const item of customKB) {
-    const q = item.q.toLowerCase().trim();
-    if(
-      low === q ||                          // exact match
-      low.includes(q) ||                    // user input contains the trained keyword
-      q.includes(low) ||                    // trained keyword contains user input
-      similarity(low, q) > 0.6             // fuzzy similarity match
-    ) {
-      return item.a;
-    }
-  }
-  return null;
-}
-
-// Simple word-overlap similarity (0 to 1)
-function similarity(a, b) {
-  const wordsA = new Set(a.split(/\s+/).filter(w => w.length > 2));
-  const wordsB = new Set(b.split(/\s+/).filter(w => w.length > 2));
-  if(wordsA.size === 0 || wordsB.size === 0) return 0;
-  let overlap = 0;
-  wordsA.forEach(w => { if(wordsB.has(w)) overlap++; });
-  return overlap / Math.max(wordsA.size, wordsB.size);
-}
-
-// ========== BUILT-IN KB LOOKUP ==========
+// ========== KNOWLEDGE LOOKUP ==========
 function lookupKB(txt) {
   const low = txt.toLowerCase().trim();
-  // builtin only (custom is handled separately above)
+  // custom KB first
+  for(const item of customKB) {
+    if(low.includes(item.q.toLowerCase()) || item.q.toLowerCase().includes(low)) return item.a;
+  }
+  // builtin
   for(const item of builtinKB) {
     for(const kw of item.q) {
       if(low.includes(kw) || kw.includes(low.substring(0,12))) return {text:item.a, math:item.math||false};
@@ -467,18 +443,7 @@ async function sendMessage() {
     }
   }
 
-  // ── STEP 1: Always check custom trained KB first (highest priority) ──
-  if(txt) {
-    const customMatch = lookupCustomKB(txt);
-    if(customMatch) {
-      hideTyping();
-      appendBotMsg('🧠 <em style="font-size:11px;color:#9c91ff">[From my training]</em><br/>' + customMatch);
-      speak(customMatch.replace(/<[^>]+>/g,'').substring(0,220));
-      return;
-    }
-  }
-
-  // ── STEP 2: Gemini API (with image support) ──
+  // Gemini API (with image support)
   if(geminiConnected && geminiKey) {
     try {
       const reply = await callGemini(txt, imgData);
@@ -498,7 +463,6 @@ async function sendMessage() {
     return;
   }
 
-  // ── STEP 3: Offline built-in KB ──
   setTimeout(()=>{hideTyping();localReply(txt, imgData);}, 900 + Math.random()*500);
 }
 
@@ -526,15 +490,7 @@ function localReply(txt, imgData) {
     return;
   }
 
-  // Custom trained KB (safety net for offline mode — already checked above for online mode)
-  const customMatch = lookupCustomKB(txt);
-  if(customMatch) {
-    appendBotMsg('🧠 <em style="font-size:11px;color:#9c91ff">[From my training]</em><br/>' + customMatch);
-    speak(customMatch.replace(/<[^>]+>/g,'').substring(0,220));
-    return;
-  }
-
-  // Built-in KB lookup
+  // KB lookup
   const found = lookupKB(txt);
   if(found) {
     const reply = typeof found === 'object' ? found.text : found;
