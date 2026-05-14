@@ -1,1 +1,856 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>COSMOS – by Cognospace</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Baloo+2:wght@700;800&display=swap" rel="stylesheet"/>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Nunito',sans-serif;background:linear-gradient(135deg,#e0f7fa 0%,#fce4ec 50%,#f3e5f5 100%);min-height:100vh;overflow-x:hidden}
+  :root{--primary:#6c63ff;--secondary:#ff6584;--accent:#ffb347;--teal:#00bcd4;--green:#4caf50;--bg-card:rgba(255,255,255,0.92);--shadow:0 8px 32px rgba(108,99,255,0.13)}
 
+  /* ===== HEADER ===== */
+  header{background:rgba(255,255,255,0.85);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:2px solid rgba(108,99,255,0.12);padding:0 20px;height:64px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 20px rgba(108,99,255,0.1)}
+  .header-left{display:flex;align-items:center;gap:10px}
+  .cosmos-title{font-family:'Baloo 2',cursive;font-size:clamp(22px,4vw,32px);font-weight:800;background:linear-gradient(135deg,#6c63ff,#ff6584,#ffb347);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:1px;animation:shimmer 3s linear infinite;background-size:200%}
+  @keyframes shimmer{0%{background-position:0%}100%{background-position:200%}}
+  .by-text{font-size:12px;color:#aaa;font-weight:600;letter-spacing:1px}
+  .logo-wrap{display:flex;align-items:center;gap:6px}
+  .cognospace-logo{height:32px;cursor:pointer;transition:transform 0.3s;border-radius:6px}
+  .cognospace-logo:hover{transform:scale(1.08) rotate(-2deg)}
+  .stars-badge{background:linear-gradient(135deg,#6c63ff,#ff6584);color:#fff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:0.5px;animation:pulse 2s ease-in-out infinite}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(108,99,255,0.4)}50%{box-shadow:0 0 0 8px rgba(108,99,255,0)}}
+
+  /* ===== MODE TABS ===== */
+  .mode-bar{display:flex;justify-content:center;gap:12px;padding:16px 20px 8px;flex-wrap:wrap}
+  .mode-btn{display:flex;align-items:center;gap:8px;padding:10px 28px;border-radius:50px;border:none;cursor:pointer;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;transition:all 0.3s;letter-spacing:0.5px}
+  .mode-btn.active{background:linear-gradient(135deg,var(--primary),#9c91ff);color:#fff;box-shadow:0 4px 20px rgba(108,99,255,0.4);transform:translateY(-2px)}
+  .mode-btn:not(.active){background:#fff;color:#888;border:2px solid #e0e0e0}
+  .mode-btn:not(.active):hover{border-color:var(--primary);color:var(--primary);transform:translateY(-1px)}
+
+  /* ===== MAIN LAYOUT ===== */
+  .main-wrap{max-width:900px;margin:0 auto;padding:0 12px 20px}
+
+  /* ===== CHAT CONTAINER ===== */
+  .chat-section{background:var(--bg-card);border-radius:24px;box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column;height:calc(100vh - 220px);min-height:420px;border:1.5px solid rgba(108,99,255,0.1)}
+  .chat-messages{flex:1;overflow-y:auto;padding:20px 16px;display:flex;flex-direction:column;gap:14px;scroll-behavior:smooth}
+  .chat-messages::-webkit-scrollbar{width:5px}
+  .chat-messages::-webkit-scrollbar-thumb{background:linear-gradient(var(--primary),var(--secondary));border-radius:10px}
+
+  /* messages */
+  .msg{display:flex;gap:10px;align-items:flex-end;animation:msgIn 0.4s cubic-bezier(.2,1,.3,1)}
+  @keyframes msgIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+  .msg.user{flex-direction:row-reverse}
+  .avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+  .avatar.bot{background:linear-gradient(135deg,#6c63ff,#ff6584);box-shadow:0 3px 12px rgba(108,99,255,0.35)}
+  .avatar.user-av{background:linear-gradient(135deg,#ffb347,#ff6584);box-shadow:0 3px 12px rgba(255,101,132,0.3)}
+  .bubble{max-width:75%;padding:12px 16px;border-radius:18px;font-size:14.5px;line-height:1.6;word-break:break-word}
+  .bubble.bot{background:linear-gradient(135deg,#f0eeff,#fce4ec);color:#333;border-bottom-left-radius:4px}
+  .bubble.user{background:linear-gradient(135deg,#6c63ff,#9c91ff);color:#fff;border-bottom-right-radius:4px}
+  .msg-time{font-size:10px;color:#bbb;margin-top:3px;text-align:right}
+  .hint-badge{display:inline-block;background:#fff3e0;color:#e65100;border-radius:20px;font-size:11px;font-weight:700;padding:2px 10px;margin-bottom:6px;border:1.5px solid #ffcc80}
+
+  /* typing indicator */
+  .typing-indicator{display:flex;gap:5px;padding:10px 14px;background:#f0eeff;border-radius:18px;border-bottom-left-radius:4px;width:fit-content}
+  .typing-dot{width:8px;height:8px;background:var(--primary);border-radius:50%;animation:bounce 1.2s ease-in-out infinite}
+  .typing-dot:nth-child(2){animation-delay:0.2s}
+  .typing-dot:nth-child(3){animation-delay:0.4s}
+  @keyframes bounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-8px)}}
+
+  /* ===== INPUT BAR ===== */
+  .input-bar{padding:12px 14px;border-top:1.5px solid rgba(108,99,255,0.1);background:rgba(255,255,255,0.9);display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}
+  .input-row{display:flex;gap:8px;flex:1;align-items:flex-end;min-width:0}
+  .msg-input{flex:1;border:2px solid #e0e0e0;border-radius:20px;padding:10px 16px;font-family:'Nunito',sans-serif;font-size:14px;resize:none;outline:none;transition:border 0.3s;max-height:100px;overflow-y:auto;min-height:44px}
+  .msg-input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(108,99,255,0.1)}
+  .icon-btn{width:42px;height:42px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;transition:all 0.3s;flex-shrink:0}
+  .send-btn{background:linear-gradient(135deg,var(--primary),#9c91ff);color:#fff;box-shadow:0 3px 12px rgba(108,99,255,0.35)}
+  .send-btn:hover{transform:scale(1.1) rotate(5deg)}
+  .mic-btn{background:linear-gradient(135deg,#ff6584,#ffb347);color:#fff;box-shadow:0 3px 12px rgba(255,101,132,0.3)}
+  .mic-btn:hover{transform:scale(1.1)}
+  .mic-btn.recording{animation:recPulse 1s ease-in-out infinite}
+  @keyframes recPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,101,132,0.5)}50%{box-shadow:0 0 0 10px rgba(255,101,132,0)}}
+  .img-btn{background:linear-gradient(135deg,#00bcd4,#4caf50);color:#fff;box-shadow:0 3px 12px rgba(0,188,212,0.3)}
+  .img-btn:hover{transform:scale(1.1)}
+  #imgUploadInput{display:none}
+
+  /* ===== GEMINI KEY BAR ===== */
+  .api-bar{background:linear-gradient(135deg,#fff9e6,#fff3f3);border:1.5px dashed #ffb347;border-radius:16px;padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .api-bar input{flex:1;border:2px solid #ffe0b2;border-radius:12px;padding:8px 12px;font-family:'Nunito',sans-serif;font-size:13px;outline:none;min-width:160px}
+  .api-bar input:focus{border-color:#ffb347}
+  .api-connect-btn{background:linear-gradient(135deg,#ffb347,#ff6584);color:#fff;border:none;border-radius:12px;padding:8px 16px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:transform 0.2s}
+  .api-connect-btn:hover{transform:scale(1.05)}
+  .api-status{font-size:12px;font-weight:700;padding:4px 10px;border-radius:20px}
+  .api-status.connected{background:#e8f5e9;color:#2e7d32}
+  .api-status.disconnected{background:#fce4ec;color:#c62828}
+
+  /* ===== TRAINING MODE ===== */
+  .training-section{background:var(--bg-card);border-radius:24px;box-shadow:var(--shadow);padding:24px;border:1.5px solid rgba(108,99,255,0.1)}
+  .section-title{font-family:'Baloo 2',cursive;font-size:20px;font-weight:700;color:var(--primary);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+  .train-form{display:flex;flex-direction:column;gap:12px}
+  .train-input{border:2px solid #e0e0e0;border-radius:14px;padding:11px 14px;font-family:'Nunito',sans-serif;font-size:14px;outline:none;transition:border 0.3s;width:100%}
+  .train-input:focus{border-color:var(--primary)}
+  .learn-btn{background:linear-gradient(135deg,var(--primary),#9c91ff);color:#fff;border:none;border-radius:14px;padding:12px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;transition:all 0.3s;letter-spacing:0.5px}
+  .learn-btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(108,99,255,0.4)}
+  .learn-btn:active{transform:scale(0.97)}
+  .kb-list{margin-top:20px}
+  .kb-item{background:linear-gradient(135deg,#f0eeff,#fce4ec);border-radius:14px;padding:12px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;animation:msgIn 0.4s ease}
+  .kb-item-text{font-size:13px;color:#444;flex:1}
+  .kb-q{font-weight:700;color:var(--primary)}
+  .kb-a{color:#555}
+  .del-btn{background:none;border:none;cursor:pointer;font-size:16px;color:#ff6584;padding:2px 6px;border-radius:8px;transition:background 0.2s}
+  .del-btn:hover{background:#fce4ec}
+  .train-success{background:#e8f5e9;color:#2e7d32;border-radius:12px;padding:8px 14px;font-size:13px;font-weight:700;display:none;align-items:center;gap:6px}
+
+  /* ===== POP-UPS ===== */
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,0.35);z-index:200;display:flex;align-items:center;justify-content:center;animation:fadeIn 0.3s;padding:16px}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .popup{background:#fff;border-radius:24px;padding:28px 24px;max-width:420px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(108,99,255,0.2);animation:popIn 0.4s cubic-bezier(.2,1.4,.4,1)}
+  @keyframes popIn{from{transform:scale(0.7);opacity:0}to{transform:none;opacity:1}}
+  .popup-emoji{font-size:52px;margin-bottom:10px}
+  .popup-title{font-family:'Baloo 2',cursive;font-size:22px;font-weight:800;color:var(--primary);margin-bottom:8px}
+  .popup-text{font-size:14px;color:#555;line-height:1.7;margin-bottom:18px}
+  .popup-btn{background:linear-gradient(135deg,var(--primary),#9c91ff);color:#fff;border:none;border-radius:14px;padding:11px 30px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:transform 0.2s}
+  .popup-btn:hover{transform:scale(1.05)}
+  .popup-hint{background:#fff3e0;border-radius:12px;padding:10px 14px;font-size:13px;color:#e65100;font-weight:600;margin-bottom:16px}
+
+  /* ===== TOAST ===== */
+  .toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:linear-gradient(135deg,var(--primary),#9c91ff);color:#fff;padding:10px 22px;border-radius:50px;font-size:14px;font-weight:700;z-index:300;opacity:0;transition:all 0.4s;pointer-events:none;white-space:nowrap}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  /* ===== FOOTER ===== */
+  footer{background:linear-gradient(135deg,#1a1a2e,#16213e,#0f3460);color:#fff;text-align:center;padding:24px 20px 16px;margin-top:24px}
+  .footer-logo-row{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:8px}
+  .footer-cosmos{font-family:'Baloo 2',cursive;font-size:22px;font-weight:800;background:linear-gradient(135deg,#6c63ff,#ff6584,#ffb347);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .footer-sub{font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:6px}
+  .footer-divider{border:none;border-top:1px solid rgba(255,255,255,0.1);margin:12px auto;width:80%}
+  .footer-credits{font-size:12px;color:rgba(255,255,255,0.4);letter-spacing:0.5px}
+  .footer-credits a{color:rgba(108,99,255,0.8);text-decoration:none;font-weight:700}
+  .footer-credits a:hover{color:#9c91ff}
+  .footer-stars{font-size:18px;letter-spacing:4px;margin-bottom:4px}
+
+  /* ===== SPARKLES ===== */
+  .sparkle{position:fixed;pointer-events:none;font-size:20px;z-index:9999;animation:sparkleAnim 1s forwards}
+  @keyframes sparkleAnim{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-60px) scale(0.3)}}
+
+  /* ===== RESPONSIVE ===== */
+  @media(max-width:600px){
+    .chat-section{height:calc(100vh - 240px)}
+    .bubble{max-width:88%}
+    .mode-btn{padding:8px 18px;font-size:13px}
+    .api-bar{flex-direction:column}
+    header{padding:0 12px}
+    .cosmos-title{font-size:22px}
+  }
+  @media(max-width:380px){
+    .bubble{max-width:92%;font-size:13.5px}
+    .input-row{gap:5px}
+    .icon-btn{width:38px;height:38px;font-size:16px}
+  }
+
+  /* ===== WELCOME BANNER ===== */
+  .welcome-card{background:linear-gradient(135deg,#6c63ff,#ff6584);border-radius:20px;color:#fff;padding:18px 20px;margin-bottom:14px;text-align:center}
+  .welcome-card h2{font-family:'Baloo 2',cursive;font-size:18px;margin-bottom:4px}
+  .welcome-card p{font-size:13px;opacity:0.9;line-height:1.5}
+  .quick-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;justify-content:center}
+  .chip{background:rgba(255,255,255,0.25);border:1.5px solid rgba(255,255,255,0.4);color:#fff;border-radius:20px;padding:5px 14px;font-size:12px;font-weight:700;cursor:pointer;transition:all 0.2s;backdrop-filter:blur(4px)}
+  .chip:hover{background:rgba(255,255,255,0.4);transform:scale(1.05)}
+
+  /* uploaded image preview */
+  .img-preview-wrap{display:none;align-items:center;gap:6px;padding:6px 10px;background:#f0eeff;border-radius:12px;margin-bottom:4px;width:100%}
+  .img-preview-wrap img{width:40px;height:40px;border-radius:8px;object-fit:cover}
+  .img-preview-name{font-size:12px;color:#555;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .img-clear-btn{background:none;border:none;cursor:pointer;color:#ff6584;font-size:16px}
+</style>
+</head>
+<body>
+
+<!-- ===== HEADER ===== -->
+<header>
+  <div class="header-left">
+    <div>
+      <div class="cosmos-title">✦ COSMOS</div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+      <span class="by-text">BY</span>
+      <div class="logo-wrap">
+        <a href="COGNOSPACE_WEBSITE_URL" target="_blank" id="cognoLogoLink" title="Visit Cognospace">
+          <!-- Replace cognospace_logo.png with your actual logo file -->
+          <img src="cognospace_logo.png" alt="Cognospace" class="cognospace-logo" onerror="this.style.display='none';document.getElementById('cognoText').style.display='block'"/>
+          <span id="cognoText" style="display:none;font-family:'Baloo 2',cursive;font-size:15px;font-weight:800;background:linear-gradient(135deg,#6c63ff,#ff6584);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">Cognospace</span>
+        </a>
+      </div>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px">
+    <span class="stars-badge">🌟 AI Ethics</span>
+  </div>
+</header>
+
+<!-- ===== MODE TABS ===== -->
+<div class="mode-bar">
+  <button class="mode-btn active" id="btnLive" onclick="switchMode('live')">🚀 Live Mode</button>
+  <button class="mode-btn" id="btnTrain" onclick="switchMode('train')">🧠 Training Mode</button>
+</div>
+
+<!-- ===== MAIN WRAP ===== -->
+<div class="main-wrap">
+
+  <!-- ====== LIVE MODE ====== -->
+  <div id="liveSection">
+    <!-- Gemini API bar -->
+    <div class="api-bar">
+      <span style="font-size:18px">🔑</span>
+      <input type="password" id="geminiKeyInput" placeholder="Paste your Gemini API key here (optional)…" style="flex:1"/>
+      <button class="api-connect-btn" onclick="connectGemini()">Connect Gemini ✨</button>
+      <span class="api-status disconnected" id="apiStatus">⚡ Offline</span>
+    </div>
+
+    <!-- Image preview bar -->
+    <div class="img-preview-wrap" id="imgPreviewWrap">
+      <img id="imgPreviewThumb" src="" alt="preview"/>
+      <span class="img-preview-name" id="imgPreviewName"></span>
+      <button class="img-clear-btn" onclick="clearImage()">✕</button>
+    </div>
+
+    <!-- Chat window -->
+    <div class="chat-section">
+      <div class="chat-messages" id="chatMessages">
+        <div class="welcome-card">
+          <h2>👋 Hi there, Explorer!</h2>
+          <p>I'm <strong>COSMOS</strong> — your friendly AI learning buddy!<br/>Ask me anything about school, science, maths, history & more!</p>
+          <div class="quick-chips">
+            <span class="chip" onclick="sendChip(this)">🔢 Maths help</span>
+            <span class="chip" onclick="sendChip(this)">🔬 Science facts</span>
+            <span class="chip" onclick="sendChip(this)">📚 Study tips</span>
+            <span class="chip" onclick="sendChip(this)">🌍 History</span>
+            <span class="chip" onclick="sendChip(this)">💻 What is AI?</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Input bar -->
+      <div class="input-bar">
+        <div class="input-row" style="width:100%">
+          <label for="imgUploadInput" class="icon-btn img-btn" title="Upload image">📷</label>
+          <input type="file" id="imgUploadInput" accept="image/*" onchange="handleImageUpload(event)"/>
+          <textarea class="msg-input" id="msgInput" placeholder="Ask me anything… 🌟" rows="1"
+            onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage()}"
+            oninput="autoResize(this)"></textarea>
+          <button class="icon-btn mic-btn" id="micBtn" title="Speak your question" onclick="toggleMic()">🎙️</button>
+          <button class="icon-btn send-btn" onclick="sendMessage()" title="Send">➤</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== TRAINING MODE ====== -->
+  <div id="trainSection" style="display:none">
+    <div class="training-section">
+      <div class="section-title">🧠 Train COSMOS</div>
+      <p style="font-size:13.5px;color:#777;margin-bottom:16px;line-height:1.6">Teach me new things! Give a <strong>keyword or question</strong> and the <strong>answer</strong> you want me to remember. 🚀</p>
+
+      <div class="train-form">
+        <input type="text" class="train-input" id="trainQ" placeholder="❓ Question or keyword (e.g. 'What is a volcano?')"/>
+        <textarea class="train-input" id="trainA" placeholder="💡 Your answer (e.g. 'A volcano is a mountain that can erupt…')" rows="3" style="resize:vertical"></textarea>
+        <button class="learn-btn" onclick="learnData()">🎓 Learn This!</button>
+        <div class="train-success" id="trainSuccess">✅ Learnt! I'll remember that forever!</div>
+      </div>
+
+      <div class="kb-list" id="kbList">
+        <div style="font-family:'Baloo 2',cursive;font-size:16px;color:#aaa;margin-top:4px">📚 Trained Knowledge</div>
+        <div id="kbItems" style="margin-top:10px"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== FOOTER ===== -->
+<footer>
+  <div class="footer-stars">✦ ✧ ✦</div>
+  <div class="footer-logo-row">
+    <span class="footer-cosmos">COSMOS</span>
+  </div>
+  <div class="footer-sub">Your friendly AI learning companion 🚀</div>
+  <hr class="footer-divider"/>
+  <div class="footer-credits">
+    Designed &amp; Developed with ❤️ by
+    <a href="COGNOSPACE_WEBSITE_URL" target="_blank">Cognospace</a>
+    &nbsp;·&nbsp; © 2025 All Rights Reserved
+  </div>
+</footer>
+
+<!-- ===== WELCOME POPUP ===== -->
+<div class="overlay" id="welcomeOverlay">
+  <div class="popup">
+    <div class="popup-emoji">🌟</div>
+    <div class="popup-title">Welcome to COSMOS!</div>
+    <div class="popup-hint">⚠️ Remember: I'm your helper, not your homework-doer! Always think for yourself first.</div>
+    <div class="popup-text">
+      I can <strong>guide</strong> you, give <strong>hints</strong>, and help you <strong>learn</strong> — but for maths problems I'll give you a path, not the answer! The joy of learning is yours 🎉
+    </div>
+    <button class="popup-btn" onclick="closePopup('welcomeOverlay')">Let's Explore! 🚀</button>
+  </div>
+</div>
+
+<!-- ===== DEPENDENCY POPUP (shown every few messages) ===== -->
+<div class="overlay" id="dependPopup" style="display:none">
+  <div class="popup">
+    <div class="popup-emoji">💡</div>
+    <div class="popup-title">Just a friendly reminder!</div>
+    <div class="popup-text">
+      Don't depend too much on me! 😊<br/>
+      I'm here to <strong>guide and inspire</strong> you — but <em>your brain</em> is the real superpower. Try things on your own first, then ask me for a hint!
+    </div>
+    <button class="popup-btn" onclick="closePopup('dependPopup')">Got it, thanks! 🙌</button>
+  </div>
+</div>
+
+<!-- ===== TOAST ===== -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ========== STATE ==========
+let geminiKey = '';
+let geminiConnected = false;
+let currentMode = 'live';
+let recognition = null;
+let isRecording = false;
+let uploadedImageData = null;
+let uploadedImageName = '';
+let msgCount = 0;
+let pendingMathContext = null; // tracks math questions awaiting student answer
+let customKB = JSON.parse(localStorage.getItem('cosmos_kb') || '[]');
+
+// ========== BUILT-IN KNOWLEDGE BASE ==========
+const builtinKB = [
+  // AI ETHICS
+  {q:['what is ai','what is artificial intelligence'],a:"AI stands for Artificial Intelligence! 🤖 It means making computers smart enough to think, learn, and solve problems — kind of like how you learn in school, but for machines!"},
+  {q:['is ai good or bad','ai ethics','good about ai'],a:"Great question! 🌟 AI can be very helpful — it helps doctors find diseases, helps students learn, and makes life easier. But it's important to use AI responsibly, honestly, and fairly. That's called <strong>AI Ethics</strong>!"},
+  {q:['can ai replace humans','will ai replace teachers'],a:"AI is a powerful tool, but it can't replace the warmth of a teacher or the creativity of a human! 🧡 AI helps us do things faster, but humans bring kindness, art, and wisdom that machines can't copy."},
+  {q:['what can ai do'],a:"AI can recognise faces, translate languages, help write stories, drive cars, detect diseases, and even predict weather! 🌦️ The possibilities are huge — and you could help build the future of AI someday!"},
+  // MATHS
+  {q:['what is addition','how to add'],a:"Addition means combining numbers together! 🔢 For example, if you have 3 apples and get 2 more, you add 3 + 2. Try adding the numbers step by step. What answer do you get?",math:true,topic:'addition'},
+  {q:['what is subtraction','how to subtract'],a:"Subtraction means taking away! ➖ If you have 7 sweets and eat 3, how many are left? Try counting backwards from 7. What do you think the answer is?",math:true,topic:'subtraction'},
+  {q:['what is multiplication','how to multiply'],a:"Multiplication is like repeated addition! ✖️ For example, 3 × 4 means adding 3 four times: 3+3+3+3. Can you work it out and tell me the answer?",math:true,topic:'multiplication'},
+  {q:['what is division','how to divide'],a:"Division means splitting into equal groups! ➗ If you have 12 chocolates and share equally among 4 friends, how many does each friend get? Try drawing it out — what's your answer?",math:true,topic:'division'},
+  {q:['what is a fraction'],a:"A fraction represents a part of a whole! 🍕 Imagine a pizza cut into 4 equal slices. If you eat 1 slice, you ate 1/4 (one-fourth) of the pizza. Does that make sense?"},
+  {q:['what is geometry','what is a triangle','what is a square'],a:"Geometry is the study of shapes! 📐 A triangle has 3 sides, a square has 4 equal sides, and a circle has no corners. Shapes are all around us — can you spot 5 shapes in your room right now?"},
+  // SCIENCE
+  {q:['what is photosynthesis'],a:"Photosynthesis is how plants make their own food! 🌿 Plants use sunlight, water, and carbon dioxide from the air to make food (sugar) and release oxygen for us to breathe. Plants are amazing little food factories!"},
+  {q:['what is gravity'],a:"Gravity is a force that pulls everything toward the Earth! 🌍 That's why when you throw a ball up, it comes back down. Even the Moon stays in orbit around Earth because of gravity!"},
+  {q:['what is the solar system'],a:"Our Solar System has the Sun at the centre, and 8 planets orbiting around it: Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, and Neptune. 🪐 Earth is the 3rd planet and the only one known to have life!"},
+  {q:['what is evaporation'],a:"Evaporation is when liquid water turns into water vapour (gas) when it gets warm! ☀️ That's why puddles disappear after rain when the sun comes out. The water doesn't vanish — it goes up into the sky!"},
+  {q:['what is the water cycle'],a:"The water cycle is how water moves around Earth! 💧 Water evaporates → forms clouds (condensation) → falls as rain (precipitation) → flows into rivers → and evaporates again. It's nature's recycling system!"},
+  {q:['what is a cell','what are cells'],a:"Cells are the tiny building blocks of all living things! 🔬 Your body has about 37 trillion cells. Each cell has a specific job — muscle cells help you move, brain cells help you think!"},
+  // HISTORY
+  {q:['who was mahatma gandhi'],a:"Mahatma Gandhi was a great leader from India who fought for freedom and peace! 🕊️ He believed in non-violence (ahimsa) and peaceful protests. India became independent in 1947 partly because of his efforts. He is called the 'Father of the Nation'."},
+  {q:['what was world war 2','world war ii'],a:"World War 2 was a global conflict from 1939 to 1945. 🌍 It involved most of the world's countries and was one of the deadliest wars in history. It ended with the defeat of Germany, Italy, and Japan. It taught the world the importance of peace and unity."},
+  {q:['who invented electricity','who invented the light bulb'],a:"Thomas Edison invented the practical electric light bulb in 1879! 💡 While many scientists worked on electricity, Edison's light bulb changed the world. He also said, 'Genius is 1% inspiration and 99% perspiration!'"},
+  // ENGLISH / GENERAL
+  {q:['what is a noun'],a:"A noun is a naming word! 📝 It names a person (teacher), place (school), thing (book), or idea (happiness). Can you think of 5 nouns you can see right now?"},
+  {q:['what is a verb'],a:"A verb is an action word! 🏃 Words like run, eat, write, think, jump — all verbs! Every sentence needs a verb to tell us what's happening."},
+  {q:['what is an adjective'],a:"An adjective describes a noun! 🎨 In 'the red ball', 'red' is the adjective. Adjectives make our writing more interesting and vivid. Can you describe your room using 5 adjectives?"},
+  // STUDY TIPS
+  {q:['how to study','study tips','how to study better'],a:"Great question! 📚 Here are some super tips:\n1️⃣ Study in short bursts (25 mins, then 5 min break)\n2️⃣ Write notes in your own words\n3️⃣ Teach what you learnt to a friend\n4️⃣ Sleep well — your brain consolidates memory during sleep!\n5️⃣ Ask questions when confused — just like you're doing now! 🌟"},
+  {q:['how to concentrate','how to focus'],a:"Focusing is a skill you can train! 🎯 Try: put your phone away, find a quiet spot, drink water, and start with the hardest task first. Your brain works best when it's not distracted. You've got this! 💪"},
+  // COMPUTER SCIENCE
+  {q:['what is a computer','how does a computer work'],a:"A computer is an electronic machine that processes information! 💻 It has a CPU (brain), memory (RAM), storage (hard drive), and input/output devices. You give it instructions (programs), and it follows them super fast!"},
+  {q:['what is the internet'],a:"The internet is a giant global network connecting billions of computers! 🌐 It lets us share information, watch videos, send messages, and learn — all at the speed of light through cables and wireless signals."},
+  {q:['what is coding','what is programming'],a:"Coding is writing instructions for a computer using a special language! 🖥️ Languages like Python, Java, or Scratch tell computers exactly what to do. Coding is like giving a robot a recipe to follow — it only does exactly what you write!"},
+];
+
+// ========== MATHS DETECTION ==========
+const mathPatterns = [
+  {re:/what\s+is\s+(\d+)\s*\+\s*(\d+)/i, op:'+', fn:(a,b)=>a+b, hint:'add'},
+  {re:/what\s+is\s+(\d+)\s*-\s*(\d+)/i, op:'-', fn:(a,b)=>a-b, hint:'subtract'},
+  {re:/what\s+is\s+(\d+)\s*[x×\*]\s*(\d+)/i, op:'×', fn:(a,b)=>a*b, hint:'multiply'},
+  {re:/what\s+is\s+(\d+)\s*[÷\/]\s*(\d+)/i, op:'÷', fn:(a,b)=>Math.floor(a/b), hint:'divide'},
+  {re:/(\d+)\s*\+\s*(\d+)\s*[=?]/i, op:'+', fn:(a,b)=>a+b, hint:'add'},
+  {re:/(\d+)\s*-\s*(\d+)\s*[=?]/i, op:'-', fn:(a,b)=>a-b, hint:'subtract'},
+  {re:/(\d+)\s*[x×\*]\s*(\d+)\s*[=?]/i, op:'×', fn:(a,b)=>a*b, hint:'multiply'},
+  {re:/(\d+)\s*[÷\/]\s*(\d+)\s*[=?]/i, op:'÷', fn:(a,b)=>Math.floor(a/b), hint:'divide'},
+  {re:/solve\s+(\d+)\s*\+\s*(\d+)/i, op:'+', fn:(a,b)=>a+b, hint:'add'},
+  {re:/solve\s+(\d+)\s*-\s*(\d+)/i, op:'-', fn:(a,b)=>a-b, hint:'subtract'},
+  {re:/(\d+)\s*\+\s*(\d+)/i, op:'+', fn:(a,b)=>a+b, hint:'add'},
+  {re:/(\d+)\s*-\s*(\d+)/i, op:'-', fn:(a,b)=>a-b, hint:'subtract'},
+];
+
+function detectMath(txt) {
+  for(const p of mathPatterns) {
+    const m = txt.match(p.re);
+    if(m) {
+      const a = parseInt(m[1]), b = parseInt(m[2]);
+      return {a, b, op:p.op, ans:p.fn(a,b), hint:p.hint};
+    }
+  }
+  return null;
+}
+
+// ========== KNOWLEDGE LOOKUP ==========
+function lookupKB(txt) {
+  const low = txt.toLowerCase().trim();
+  // custom KB first
+  for(const item of customKB) {
+    if(low.includes(item.q.toLowerCase()) || item.q.toLowerCase().includes(low)) return item.a;
+  }
+  // builtin
+  for(const item of builtinKB) {
+    for(const kw of item.q) {
+      if(low.includes(kw) || kw.includes(low.substring(0,12))) return {text:item.a, math:item.math||false};
+    }
+  }
+  return null;
+}
+
+// ========== SEND MESSAGE ==========
+async function sendMessage() {
+  const input = document.getElementById('msgInput');
+  const txt = input.value.trim();
+  if(!txt && !uploadedImageData) return;
+
+  msgCount++;
+  if(msgCount % 5 === 0) showPopup('dependPopup');
+
+  appendMsg('user', txt || '📷 [Image sent]');
+  input.value = '';
+  autoResize(input);
+
+  const imgData = uploadedImageData;
+  const imgName = uploadedImageName;
+  clearImage();
+
+  showTyping();
+
+  // Check if student is answering a pending math question
+  if(pendingMathContext) {
+    const numMatch = txt.match(/\d+/);
+    if(numMatch) {
+      const studentAns = parseInt(numMatch[0]);
+      const {ans, a, b, op} = pendingMathContext;
+      hideTyping();
+      if(studentAns === ans) {
+        pendingMathContext = null;
+        const praise = ['🎉 Wohoo! Spot on! You are a STAR! ⭐','🎊 Wavy correct! Amazing work, genius! 🏆','✅ YES! That\'s exactly right! I knew you could do it! 🚀','🌟 Brilliant! Perfect answer! You rock! 🎸'];
+        const r = appendBotMsg(praise[Math.floor(Math.random()*praise.length)]);
+        speak(r.replace(/<[^>]+>/g,''));
+      } else if(Math.abs(studentAns - ans) <= 2) {
+        appendBotMsg(`Hmm, so close! 🤏 You said <strong>${studentAns}</strong>, but that's not quite it. Try once more — remember to ${pendingMathContext.hint} <strong>${a}</strong> and <strong>${b}</strong> carefully!`);
+      } else {
+        appendBotMsg(`Not quite! 🙈 You said <strong>${studentAns}</strong>. Hint: try to ${pendingMathContext.hint} <strong>${a}</strong> and <strong>${b}</strong> step by step. You've got this!`);
+      }
+      return;
+    }
+  }
+
+  // Gemini API (with image support)
+  if(geminiConnected && geminiKey) {
+    try {
+      const reply = await callGemini(txt, imgData);
+      hideTyping();
+      const formatted = reply
+        .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+        .replace(/\*(.*?)\*/g,'<em>$1</em>')
+        .replace(/\n/g,'<br/>');
+      appendBotMsg(formatted);
+      speak(reply.replace(/[*_#`]/g,'').substring(0,220));
+    } catch(e) {
+      hideTyping();
+      console.error('Gemini error:', e);
+      appendBotMsg('⚠️ ' + e.message + '<br/>Falling back to built-in knowledge! 🧠');
+      localReply(txt, imgData);
+    }
+    return;
+  }
+
+  setTimeout(()=>{hideTyping();localReply(txt, imgData);}, 900 + Math.random()*500);
+}
+
+function localReply(txt, imgData) {
+  // image without Gemini
+  if(imgData && !txt) {
+    appendBotMsg("📷 I can see you uploaded an image! I'd love to analyse it, but I need your Gemini API key for image analysis. Please enter it above and reconnect! 🔑");
+    return;
+  }
+
+  // Math detection first
+  const math = detectMath(txt);
+  if(math) {
+    const {a, b, op, ans, hint} = math;
+    pendingMathContext = {a, b, op, ans, hint};
+    const hintMsgs = {
+      add: `To find <strong>${a} + ${b}</strong>, think of it like putting ${a} objects and ${b} objects together and counting them all! 🔢 What total do you get?`,
+      subtract: `For <strong>${a} - ${b}</strong>, start at ${a} and count backwards ${b} steps! ⬅️ What number do you land on?`,
+      multiply: `For <strong>${a} × ${b}</strong>, try adding ${a} together ${b} times: ${Array(b).fill(a).join('+')}. What's the total? 🤔`,
+      divide: `For <strong>${a} ÷ ${b}</strong>, imagine sharing ${a} sweets equally among ${b} friends. How many does each friend get? 🍬`
+    };
+    const r = `🧮 Great maths question! I won't just hand you the answer — that's your discovery to make! 😊\n\n${hintMsgs[hint]}\n\nTake your time, write it down, and tell me your answer!`;
+    appendBotMsg(r.replace(/\n/g,'<br/>'));
+    speak("Great maths question! I won't just hand you the answer. Give it a try and tell me what you get!");
+    return;
+  }
+
+  // KB lookup
+  const found = lookupKB(txt);
+  if(found) {
+    const reply = typeof found === 'object' ? found.text : found;
+    appendBotMsg(reply.replace(/\n/g,'<br/>'));
+    speak(reply.replace(/<[^>]+>/g,'').substring(0,200));
+    return;
+  }
+
+  // Greetings
+  const low = txt.toLowerCase();
+  if(/^(hi|hello|hey|howdy|hiya|namaste)/.test(low)) {
+    const greets = [
+      "Hello there, superstar! 🌟 I'm COSMOS, your learning buddy! What would you like to explore today?",
+      "Hey hey hey! 👋 Great to see you! I'm ready to learn and explore together. Ask me anything!",
+      "Namaste! 🙏 Welcome to COSMOS! I'm here to guide your curiosity. What's on your mind today?"
+    ];
+    const r = greets[Math.floor(Math.random()*greets.length)];
+    appendBotMsg(r);
+    speak(r);
+    return;
+  }
+
+  if(/how are you|how r u/.test(low)) {
+    appendBotMsg("I'm doing fantastic, thanks for asking! 😄 I'm powered by curiosity — and yours makes me extra happy! What would you like to learn today?");
+    return;
+  }
+
+  if(/thank(s| you)|thx/.test(low)) {
+    appendBotMsg("You're very welcome! 🤗 Keep being curious and keep learning — you're doing amazing! Is there anything else I can help you with?");
+    return;
+  }
+
+  if(/who (are|r) you|what is cosmos/.test(low)) {
+    appendBotMsg("I'm <strong>COSMOS</strong> 🌌 — a friendly AI learning assistant built by <strong>Cognospace</strong>! I'm here to guide you through learning with hints, encouragement, and fun facts. I believe in AI Ethics — using AI for good! 🌟");
+    return;
+  }
+
+  // Fallback
+  // For offline mode, remind to use Gemini for full answers
+  const fallbacks = [
+    "Great question! 🤔 I know the basics but for the most complete answer, connect your <strong>Gemini API key</strong> above — then I can answer <em>anything</em>! Or switch to 🧠 <strong>Training Mode</strong> to teach me this yourself!",
+    "Interesting! 🌟 My built-in knowledge covers core subjects, but for this one I'd love a Gemini key to give you the full answer. Add it above and reconnect — it's free from <strong>aistudio.google.com</strong>!",
+    "Good one! 📚 I'm working from my offline knowledge right now. Connect <strong>Gemini</strong> using the key box above and I'll be able to answer almost <em>anything</em> you ask! 🚀"
+  ];
+  const r = fallbacks[Math.floor(Math.random()*fallbacks.length)];
+  appendBotMsg(r);
+}
+
+// ========== QUICK CHIPS ==========
+function sendChip(el) {
+  document.getElementById('msgInput').value = el.textContent.replace(/^\W+/,'');
+  sendMessage();
+}
+
+// ========== APPEND MESSAGES ==========
+function appendMsg(type, text) {
+  const wrap = document.getElementById('chatMessages');
+  const div = document.createElement('div');
+  div.className = `msg ${type}`;
+  const now = new Date();
+  const time = now.getHours()+':'+(now.getMinutes()<10?'0':'')+now.getMinutes();
+  if(type==='user') {
+    div.innerHTML = `<div class="avatar user-av">👤</div><div><div class="bubble user">${text}</div><div class="msg-time">${time}</div></div>`;
+  } else {
+    div.innerHTML = `<div class="avatar bot">✦</div><div><div class="bubble bot">${text}</div><div class="msg-time">${time}</div></div>`;
+  }
+  wrap.appendChild(div);
+  wrap.scrollTop = wrap.scrollHeight;
+}
+
+function appendBotMsg(text) {
+  appendMsg('bot', text);
+  return text;
+}
+
+let typingEl = null;
+function showTyping() {
+  const wrap = document.getElementById('chatMessages');
+  typingEl = document.createElement('div');
+  typingEl.className = 'msg';
+  typingEl.id = 'typingIndicator';
+  typingEl.innerHTML = `<div class="avatar bot">✦</div><div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>`;
+  wrap.appendChild(typingEl);
+  wrap.scrollTop = wrap.scrollHeight;
+}
+function hideTyping() {
+  const t = document.getElementById('typingIndicator');
+  if(t) t.remove();
+}
+
+// ========== SPEECH ==========
+function speak(text) {
+  if('speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.rate = 0.9; u.pitch = 1.1;
+    const voices = window.speechSynthesis.getVoices();
+    const preferred = voices.find(v=>v.lang.startsWith('en')&&v.name.toLowerCase().includes('female'))||voices.find(v=>v.lang.startsWith('en'))||voices[0];
+    if(preferred) u.voice = preferred;
+    window.speechSynthesis.speak(u);
+  }
+}
+
+function toggleMic() {
+  if(!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+    showToast("🎙️ Mic not supported in this browser. Try Chrome!");
+    return;
+  }
+  if(isRecording) {
+    recognition.stop();
+    return;
+  }
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SR();
+  recognition.lang = 'en-US';
+  recognition.interimResults = false;
+  recognition.onstart = () => {
+    isRecording = true;
+    document.getElementById('micBtn').classList.add('recording');
+    document.getElementById('micBtn').textContent = '⏹️';
+    showToast("🎙️ Listening… speak now!");
+  };
+  recognition.onresult = (e) => {
+    const transcript = e.results[0][0].transcript;
+    document.getElementById('msgInput').value = transcript;
+    autoResize(document.getElementById('msgInput'));
+    sendMessage();
+  };
+  recognition.onend = () => {
+    isRecording = false;
+    document.getElementById('micBtn').classList.remove('recording');
+    document.getElementById('micBtn').textContent = '🎙️';
+  };
+  recognition.onerror = (e) => {
+    showToast("❌ Mic error: " + e.error);
+    isRecording = false;
+    document.getElementById('micBtn').classList.remove('recording');
+    document.getElementById('micBtn').textContent = '🎙️';
+  };
+  recognition.start();
+}
+
+// ========== IMAGE UPLOAD ==========
+function handleImageUpload(e) {
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    uploadedImageData = ev.target.result;
+    uploadedImageName = file.name;
+    const wrap = document.getElementById('imgPreviewWrap');
+    document.getElementById('imgPreviewThumb').src = uploadedImageData;
+    document.getElementById('imgPreviewName').textContent = file.name;
+    wrap.style.display = 'flex';
+    showToast("📷 Image ready! Add a question or just send.");
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearImage() {
+  uploadedImageData = null;
+  uploadedImageName = '';
+  document.getElementById('imgPreviewWrap').style.display = 'none';
+  document.getElementById('imgPreviewThumb').src = '';
+  document.getElementById('imgUploadInput').value = '';
+}
+
+
+// ========== CALL GEMINI (exact pattern from working reference) ==========
+const GEMINI_MODEL = "gemini-2.5-flash-lite";
+
+async function callGemini(text, imgData) {
+  if (!geminiKey) throw new Error("No Gemini API key set");
+
+  const systemPrompt = `You are COSMOS, a warm, fun, and knowledgeable AI learning buddy for school students aged 6 to 16.
+
+IMPORTANT RULES:
+1. GENERAL KNOWLEDGE & FACTS (history, science, sports, geography, current events, famous people, dates, world records, etc.):
+   → Answer DIRECTLY, confidently, and completely. Give the full factual answer with fun context. NEVER say "search online" or "I don't know" for well-known facts.
+   → Example: "When did India win ICC Cricket World Cup?" → Answer: "India won the ICC Cricket World Cup in 1983 (under Kapil Dev) and again in 2011 (under MS Dhoni)! 🏆 And in 2024, India won the ICC T20 World Cup under Rohit Sharma! 🇮🇳🎉"
+
+2. MATHS PROBLEMS (calculations, equations, solve this, what is X+Y, etc.):
+   → NEVER give the direct numerical answer. Guide with a hint or method, ask the student to try and share their answer.
+   → Example: "What is 12 × 7?" → Give a multiplication strategy, not "84".
+
+3. HOMEWORK / ESSAY WRITING:
+   → Kindly decline writing it for them. Offer to guide, outline, or give hints instead.
+
+4. TONE: Always be encouraging, age-appropriate, and use emojis naturally. Keep replies concise (2–4 sentences for simple facts, more for complex topics).
+
+5. NEVER tell students to "search online" or "look it up" for standard factual questions — YOU are their learning buddy and should answer directly!
+
+USER QUESTION: "${text}"`;
+
+  const parts = [{ text: systemPrompt }];
+  if (imgData) {
+    const mimeMatch = imgData.match(/^data:(image\/[a-z]+);base64,/);
+    const mimeType = mimeMatch ? mimeMatch[1] : "image/jpeg";
+    parts.push({ inline_data: { mime_type: mimeType, data: imgData.split(",")[1] } });
+  }
+
+  const r = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${geminiKey}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ contents: [{ parts: parts }] })
+    }
+  );
+  const json = await r.json();
+  if (json.error) throw new Error("Gemini: " + json.error.message);
+  const raw = json.candidates[0].content.parts[0].text;
+  return raw;
+}
+
+// ========== GEMINI ==========
+async function connectGemini() {
+  const key = document.getElementById('geminiKeyInput').value.trim();
+  if(!key) { showToast("⚠️ Please enter your Gemini API key first!"); return; }
+
+  const statusEl = document.getElementById('apiStatus');
+  statusEl.textContent = '⏳ Verifying…';
+  statusEl.className = 'api-status';
+  statusEl.style.cssText = 'background:#fff8e1;color:#f57f17;font-size:12px;font-weight:700;padding:4px 10px;border-radius:20px';
+
+  try {
+    const testRes = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${key}`,
+      {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          contents: [{role:'user', parts:[{text:'Say hi.'}]}],
+          generationConfig: {maxOutputTokens: 8}
+        })
+      }
+    );
+    const testData = await testRes.json();
+
+    if(!testRes.ok || testData.error) {
+      const errMsg = testData.error ? testData.error.message : 'HTTP ' + testRes.status;
+      statusEl.textContent = '❌ Key Error';
+      statusEl.className = 'api-status disconnected';
+      statusEl.style.cssText = '';
+      showToast("❌ " + errMsg.substring(0, 60));
+      appendBotMsg('🔑 Gemini rejected the key: <em>' + errMsg + '</em><br/>Get a free key from <strong>aistudio.google.com</strong> → API Keys.');
+      return;
+    }
+
+    geminiKey = key;
+    geminiConnected = true;
+    statusEl.textContent = '✅ Gemini Live';
+    statusEl.className = 'api-status connected';
+    statusEl.style.cssText = '';
+    showToast("🎉 Gemini connected and verified!");
+    appendBotMsg("🚀 Woohoo! Gemini <strong>2.0 Flash</strong> is verified and ready! I can now answer almost <strong>anything</strong> — and analyse images too! Ask me something! 🌟");
+    speak("Gemini connected! I can now answer anything you ask. Go ahead!");
+    spawnSparkles();
+  } catch(e) {
+    statusEl.textContent = '❌ Network Error';
+    statusEl.className = 'api-status disconnected';
+    statusEl.style.cssText = '';
+    showToast("❌ Network error — check internet connection.");
+    appendBotMsg('❌ Could not reach Google: <em>' + e.message + '</em>');
+  }
+}
+
+// ========== TRAINING MODE ==========
+function learnData() {
+  const q = document.getElementById('trainQ').value.trim();
+  const a = document.getElementById('trainA').value.trim();
+  if(!q || !a) { showToast("⚠️ Please fill in both the question and answer!"); return; }
+  customKB.push({q, a});
+  localStorage.setItem('cosmos_kb', JSON.stringify(customKB));
+  document.getElementById('trainQ').value = '';
+  document.getElementById('trainA').value = '';
+  const s = document.getElementById('trainSuccess');
+  s.style.display = 'flex';
+  setTimeout(()=>s.style.display='none', 3000);
+  renderKB();
+  showToast("🎓 Learnt! COSMOS now knows this!");
+  spawnSparkles();
+}
+
+function renderKB() {
+  const el = document.getElementById('kbItems');
+  if(customKB.length === 0) { el.innerHTML = '<p style="color:#bbb;font-size:13px">No custom training yet. Teach me something! 🌱</p>'; return; }
+  el.innerHTML = customKB.map((item,i)=>`
+    <div class="kb-item">
+      <div class="kb-item-text">
+        <div class="kb-q">❓ ${item.q}</div>
+        <div class="kb-a">💡 ${item.a.substring(0,80)}${item.a.length>80?'…':''}</div>
+      </div>
+      <button class="del-btn" onclick="deleteKB(${i})" title="Remove">🗑️</button>
+    </div>
+  `).join('');
+}
+
+function deleteKB(i) {
+  customKB.splice(i,1);
+  localStorage.setItem('cosmos_kb', JSON.stringify(customKB));
+  renderKB();
+  showToast("🗑️ Removed from memory.");
+}
+
+// ========== MODE SWITCH ==========
+function switchMode(mode) {
+  currentMode = mode;
+  document.getElementById('liveSection').style.display = mode==='live'?'block':'none';
+  document.getElementById('trainSection').style.display = mode==='train'?'block':'none';
+  document.getElementById('btnLive').className = 'mode-btn'+(mode==='live'?' active':'');
+  document.getElementById('btnTrain').className = 'mode-btn'+(mode==='train'?' active':'');
+  if(mode==='train') renderKB();
+}
+
+// ========== POPUP / TOAST ==========
+function showPopup(id) {
+  document.getElementById(id).style.display = 'flex';
+}
+function closePopup(id) {
+  document.getElementById(id).style.display = 'none';
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 3200);
+}
+
+// ========== SPARKLES ==========
+function spawnSparkles() {
+  const emojis = ['⭐','🌟','✨','🎉','🎊','💫','🌈','🏆'];
+  for(let i=0;i<8;i++) {
+    setTimeout(()=>{
+      const s = document.createElement('div');
+      s.className = 'sparkle';
+      s.textContent = emojis[Math.floor(Math.random()*emojis.length)];
+      s.style.left = Math.random()*80+10+'%';
+      s.style.top = Math.random()*60+20+'%';
+      document.body.appendChild(s);
+      setTimeout(()=>s.remove(), 1000);
+    }, i*100);
+  }
+}
+
+// ========== UTILS ==========
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 100) + 'px';
+}
+
+// ========== INIT ==========
+window.addEventListener('load', () => {
+  renderKB();
+  // load voices
+  if('speechSynthesis' in window) window.speechSynthesis.getVoices();
+  // show welcome popup after slight delay
+  setTimeout(()=>showPopup('welcomeOverlay'), 600);
+});
+</script>
+</body>
+</html>
