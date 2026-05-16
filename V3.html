@@ -10,25 +10,22 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getDatabase, ref, push, onValue, set, get, increment, runTransaction }
     from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-  import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
 
   // ══════════════════════════════════════════════════════════
-  // 🔥 FIREBASE CONFIG — cosmos-chatbot project
+  // 🔥 FIREBASE CONFIG — replace with your own project values
   // ══════════════════════════════════════════════════════════
   const firebaseConfig = {
-    apiKey:            "AIzaSyBA7Sv5AjRJLmPb2DZDkpHVhy5mBqaq5fY",
-    authDomain:        "cosmos-chatbot.firebaseapp.com",
-    databaseURL:       "https://cosmos-chatbot-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId:         "cosmos-chatbot",
-    storageBucket:     "cosmos-chatbot.firebasestorage.app",
-    messagingSenderId: "745193454032",
-    appId:             "1:745193454032:web:29d23b6c02c6c5d4dca1d5",
-    measurementId:     "G-J6GV0R25DC"
+    apiKey:            "YOUR_API_KEY",
+    authDomain:        "YOUR_PROJECT.firebaseapp.com",
+    databaseURL:       "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
+    projectId:         "YOUR_PROJECT",
+    storageBucket:     "YOUR_PROJECT.appspot.com",
+    messagingSenderId: "YOUR_SENDER_ID",
+    appId:             "YOUR_APP_ID"
   };
 
-  const app       = initializeApp(firebaseConfig);
-  const db        = getDatabase(app);
-  const analytics = getAnalytics(app);
+  const app = initializeApp(firebaseConfig);
+  const db  = getDatabase(app);
 
   // ── expose helpers on window so non-module scripts can call them ──
   window._fb = {
@@ -241,15 +238,6 @@ footer{background:linear-gradient(135deg,#1a1a2e,#16213e,#0f3460);color:#fff;tex
   .icon-btn{width:38px;height:38px;font-size:16px}
 }
 
-/* ===== BAD USE WARNING POPUP ===== */
-#badUseOverlay .popup{border-top:5px solid #f44336;max-width:360px}
-.popup-emoji-warn{font-size:58px;margin-bottom:6px;animation:shake 0.5s ease-in-out}
-@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
-.popup-title-warn{font-family:'Baloo 2',cursive;font-size:21px;font-weight:800;color:#d32f2f;margin-bottom:8px}
-.popup-warn-box{background:#fff3f3;border:1.5px solid #ffcdd2;border-radius:12px;padding:12px 14px;font-size:13.5px;color:#b71c1c;font-weight:700;margin-bottom:16px;line-height:1.6}
-.popup-btn-red{background:linear-gradient(135deg,#f44336,#e91e63);color:#fff;border:none;border-radius:14px;padding:11px 30px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:transform 0.2s}
-.popup-btn-red:hover{transform:scale(1.05)}
-
 /* ===== WELCOME BANNER ===== */
 .welcome-card{background:linear-gradient(135deg,#6c63ff,#ff6584);border-radius:20px;color:#fff;padding:18px 20px;margin-bottom:14px;text-align:center}
 .welcome-card h2{font-family:'Baloo 2',cursive;font-size:18px;margin-bottom:4px}
@@ -428,20 +416,6 @@ footer{background:linear-gradient(135deg,#1a1a2e,#16213e,#0f3460);color:#fff;tex
       I'm here to <strong>guide and inspire</strong> you — but <em>your brain</em> is the real superpower. Try things on your own first, then ask me for a hint!
     </div>
     <button class="popup-btn" onclick="closePopup('dependPopup')">Got it, thanks! 🙌</button>
-  </div>
-</div>
-
-<!-- ===== BAD USE WARNING POPUP ===== -->
-<div class="overlay" id="badUseOverlay" style="display:none">
-  <div class="popup" style="text-align:center">
-    <div class="popup-emoji-warn">🚫</div>
-    <div class="popup-title-warn">Oops! That's not okay.</div>
-    <div class="popup-warn-box">
-      ⚠️ Use me for good use cases.<br/><br/>
-      I'm <strong>COSMOS</strong> — a learning buddy for students. I'm here to help with education, science, maths, history, and more.<br/><br/>
-      Please keep our conversation safe, respectful, and school-friendly. 🙏
-    </div>
-    <button class="popup-btn-red" onclick="closePopup('badUseOverlay')">I Understand 👍</button>
   </div>
 </div>
 
@@ -687,49 +661,11 @@ function lookupKB(txt) {
   return null;
 }
 
-// ========== 18+ / IRRELEVANT CONTENT FILTER ==========
-const BLOCKED_PATTERNS = [
-  // 18+ / adult
-  /\bsex\b|\bporn\b|\bnude\b|\bnaked\b|\bxxx\b|\berotic\b|\badult content\b|\bboobs\b|\bnipple\b|\bpenis\b|\bvagina\b|\bintercourse\b|\bfornication\b|\bmasturbat\b|\bcondom\b|\bviagra\b/i,
-  // Violence / weapons
-  /\bhow to (make|build|create|assemble) (a )?(bomb|gun|weapon|explosive|poison|drug)\b|\bkill (someone|a person|people)\b|\bhow to (kill|murder|stab|shoot)\b/i,
-  // Drugs
-  /\bhow to (get|make|buy|use|take) (drugs|weed|cocaine|heroin|meth|lsd|mdma|ecstasy)\b|\bget high\b|\bsmoke weed\b/i,
-  // Abuse / hate
-  /\bhate speech\b|\bracist\b|\bslur\b/i,
-  // Gambling / betting
-  /\bhow to (win|cheat).*(casino|poker|bet|gambling|slot)\b/i,
-  // Suicide / self-harm
-  /\bhow to (commit suicide|kill myself|self[- ]harm|cut myself)\b/i,
-];
-
-// Topics that are simply outside COSMOS's educational scope
-const OFF_TOPIC_PATTERNS = [
-  /\b(stock|crypto|bitcoin|forex|trading|invest) (tips|advice|picks|signals)\b/i,
-  /\b(dating|hook[ -]?up|tinder|relationship advice)\b/i,
-  /\b(movie torrent|pirat|crack software|keygen|hack (netflix|spotify|account))\b/i,
-];
-
-function isBlockedContent(txt) {
-  for(const p of BLOCKED_PATTERNS) if(p.test(txt)) return { blocked: true, type: 'inappropriate' };
-  for(const p of OFF_TOPIC_PATTERNS) if(p.test(txt)) return { blocked: true, type: 'offtopic' };
-  return { blocked: false };
-}
-
 // ========== SEND MESSAGE ==========
 async function sendMessage() {
   const input = document.getElementById('msgInput');
   const txt = input.value.trim();
   if(!txt && !uploadedImageData) return;
-
-  // ── Block 18+ / irrelevant content before anything else ──
-  if(txt) {
-    const { blocked, type } = isBlockedContent(txt);
-    if(blocked) {
-      showPopup('badUseOverlay');
-      return;
-    }
-  }
 
   msgCount++;
   if(msgCount % 5 === 0) showPopup('dependPopup');
@@ -811,14 +747,9 @@ async function sendMessage() {
     try {
       const reply = await callGemini(txt, imgData);
       hideTyping();
-      // If Gemini flagged it as blocked content
-      if(reply.trim() === 'BLOCKED_CONTENT') {
-        showPopup('badUseOverlay');
-        return;
-      }
       let finalReply = reply;
-      // Translate if needed (works with or without Gemini via MyMemory fallback)
-      if(translateTo) {
+      // Translate if needed
+      if(translateTo && geminiConnected) {
         finalReply = await translateText(reply, translateTo);
       }
       const formatted = finalReply
@@ -876,15 +807,13 @@ function localReply(txt, imgData) {
   }
 
   const low = txt.toLowerCase();
-  if(/^(hi|hello|hey|howdy|hiya|namaste|helo|hii|hiii)/.test(low)) {
-    const extras = [
-      " I love learning alongside curious minds like yours! What subject shall we explore today? 🚀",
-      " Ready to go on a learning adventure together? Ask me anything — science, maths, history and more! 🌟",
-      " I'm here to make learning fun and easy! What are you curious about today? 😊",
-      " It's a great day to learn something new! What topic is on your mind? 🎉"
+  if(/^(hi|hello|hey|howdy|hiya|namaste)/.test(low)) {
+    const greets = [
+      "Hello there, superstar! 🌟 I'm COSMOS, your learning buddy! What would you like to explore today?",
+      "Hey hey hey! 👋 Great to see you! I'm ready to learn and explore together. Ask me anything!",
+      "Namaste! 🙏 Welcome to COSMOS! I'm here to guide your curiosity. What's on your mind today?"
     ];
-    const extra = extras[Math.floor(Math.random()*extras.length)];
-    appendBotMsgWithSpeak("Hi! I am COSMOS, your AI chatbot developed by Cognospace. 🌌" + extra, voiceInputMode);
+    appendBotMsgWithSpeak(greets[Math.floor(Math.random()*greets.length)], voiceInputMode);
     return;
   }
   if(/how are you|how r u/.test(low)) {
@@ -1076,50 +1005,22 @@ function applyTranslation() {
   appendBotMsg(`🌐 Translation updated! Voice input language: <strong>${speakLang}</strong>. Responses will be ${translateTo ? 'translated to <strong>' + translateTo + '</strong>' : 'in <strong>English</strong>'}.`);
 }
 
-// Language name → ISO code map for MyMemory free translation API (works without Gemini)
-const LANG_CODES = {
-  'Hindi':'hi','Telugu':'te','Tamil':'ta','Kannada':'kn','Malayalam':'ml',
-  'Marathi':'mr','Bengali':'bn','Gujarati':'gu','French':'fr','German':'de',
-  'Spanish':'es','Arabic':'ar','Chinese (Simplified)':'zh-CN','Japanese':'ja'
-};
-
 async function translateText(text, targetLang) {
-  if(!targetLang) return text;
-  // Strip HTML tags before sending to translation
-  const plainText = text.replace(/<[^>]+>/g, '');
-
-  // Option A: Gemini (connected) — higher quality, handles emojis & tone well
-  if(geminiConnected && geminiKey) {
-    try {
-      const r = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${geminiKey}`,
-        {
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({
-            contents:[{parts:[{text:`Translate the following student-friendly educational text to ${targetLang}. Keep the same friendly tone and keep all emojis. Return ONLY the translated text with no explanation:\n\n${plainText}`}]}]
-          })
-        }
-      );
-      const j = await r.json();
-      if(!j.error) return j.candidates[0].content.parts[0].text || text;
-    } catch(e) { /* fall through to MyMemory */ }
-  }
-
-  // Option B: MyMemory free API — works WITHOUT Gemini, no key needed
-  const langCode = LANG_CODES[targetLang];
-  if(!langCode) return text;
+  if(!geminiKey || !targetLang) return text;
   try {
-    const chunks = [];
-    for(let i = 0; i < plainText.length; i += 480) chunks.push(plainText.slice(i, i+480));
-    const translated = [];
-    for(const chunk of chunks) {
-      const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(chunk)}&langpair=en|${langCode}`;
-      const res = await fetch(url);
-      const data = await res.json();
-      translated.push(data.responseData?.translatedText || chunk);
-    }
-    return translated.join(' ');
+    const r = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${geminiKey}`,
+      {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          contents:[{parts:[{text:`Translate the following educational content to ${targetLang}. Keep emojis, keep the student-friendly tone, keep any HTML tags intact. Only return the translated text, nothing else:\n\n${text}`}]}]
+        })
+      }
+    );
+    const j = await r.json();
+    if(j.error) return text;
+    return j.candidates[0].content.parts[0].text || text;
   } catch(e) {
     return text;
   }
@@ -1161,7 +1062,6 @@ IMPORTANT RULES:
 3. HOMEWORK / ESSAY WRITING: Kindly decline writing it for them. Offer to guide, outline, or give hints instead.
 4. STUDENT-FRIENDLY TONE: Always use simple words, short sentences, relatable examples, and encouragement. Use emojis naturally. Keep it fun! Avoid jargon. Imagine you're explaining to a 10-year-old.
 5. CONTEXT: You remember what the student asked earlier in this conversation. If they ask a follow-up question about the same topic, continue from where you left off.
-6. SAFETY: If asked anything 18+, violent, illegal, or completely off-topic for a student learning assistant, respond with ONLY this exact text and nothing else: BLOCKED_CONTENT
 6. NEVER tell students to "search online" — YOU are their learning buddy!
 7. RESPONSE LENGTH: 2–5 sentences for simple facts, more for complex topics. Never too long — keep it digestible for kids.`;
 
