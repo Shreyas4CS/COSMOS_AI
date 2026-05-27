@@ -1289,33 +1289,16 @@ function hideTyping() {
   if(t) t.remove();
 }
 
-// ========== EMOJI STRIPPER ==========
-function stripEmojis(text) {
-  return text
-    // Remove all emoji / pictograph / symbol Unicode ranges
-    .replace(/[\u{1F000}-\u{1FFFF}]/gu, '')
-    .replace(/[\u{2600}-\u{27BF}]/gu, '')
-    .replace(/[\u{FE00}-\u{FE0F}]/gu, '')
-    .replace(/[\u{1F900}-\u{1F9FF}]/gu, '')
-    .replace(/[\u{1FA00}-\u{1FAFF}]/gu, '')
-    // Variation selectors & ZWJ sequences
-    .replace(/\uFE0F/g, '')
-    .replace(/\u200D/g, '')
-    // Clean up extra whitespace left behind
-    .replace(/\s{2,}/g, ' ')
-    .trim();
-}
-
 // ========== SPEECH — per-message speaker ==========
 function speakText(btn, sid) {
-  const text = stripEmojis(btn.dataset.text || '');
+  const text = btn.dataset.text || '';
   speak(text);
 }
 
 function speak(text) {
   if('speechSynthesis' in window) {
     window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(stripEmojis(text));
+    const u = new SpeechSynthesisUtterance(text);
     u.rate = 0.9; u.pitch = 1.1;
     const voices = window.speechSynthesis.getVoices();
     const preferred = voices.find(v=>v.lang.startsWith('en')&&v.name.toLowerCase().includes('female'))||voices.find(v=>v.lang.startsWith('en'))||voices[0];
