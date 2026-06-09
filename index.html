@@ -4,2292 +4,1228 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>COSMOS – by Cognospace</title>
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Baloo+2:wght@700;800&display=swap" rel="stylesheet"/>
-<!-- Firebase SDK -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getDatabase, ref, push, onValue, set, get, increment, runTransaction }
-    from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-  import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
-
-  // ══════════════════════════════════════════════════════════
-  // 🔥 FIREBASE CONFIG — cosmos-chatbot project
-  // ══════════════════════════════════════════════════════════
-  const firebaseConfig = {
-    apiKey:            "AIzaSyBA7Sv5AjRJLmPb2DZDkpHVhy5mBqaq5fY",
-    authDomain:        "cosmos-chatbot.firebaseapp.com",
-    databaseURL:       "https://cosmos-chatbot-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId:         "cosmos-chatbot",
-    storageBucket:     "cosmos-chatbot.firebasestorage.app",
-    messagingSenderId: "745193454032",
-    appId:             "1:745193454032:web:29d23b6c02c6c5d4dca1d5",
-    measurementId:     "G-J6GV0R25DC"
-  };
-
-  const app       = initializeApp(firebaseConfig);
-  const db        = getDatabase(app);
-  const analytics = getAnalytics(app);
-
-  // ── expose helpers on window so non-module scripts can call them ──
-  window._fb = {
-    // Save a trained Q/A/Keywords globally to Firebase
-    saveTraining(q, keywords, a) {
-      push(ref(db, 'cosmos_training'), { q, keywords, a, ts: Date.now() });
-      // Increment global counter
-      runTransaction(ref(db, 'cosmos_stats/totalTrained'), (cur) => (cur || 0) + 1);
-    },
-    // Fetch all globally trained data and merge into local KB
-    fetchGlobalKB(cb) {
-      onValue(ref(db, 'cosmos_training'), snap => {
-        const items = [];
-        snap.forEach(child => {
-          const d = child.val();
-          items.push({ q: d.q, keywords: d.keywords || '', a: d.a });
-        });
-        cb(items);
-      });
-    },
-    // Listen for total trained count
-    watchCount(cb) {
-      onValue(ref(db, 'cosmos_stats/totalTrained'), snap => cb(snap.val() || 0));
-    },
-    // Save conversation feedback (for future model improvement)
-    saveFeedback(question, answer, rating) {
-      push(ref(db, 'cosmos_feedback'), { question, answer, rating, ts: Date.now() });
-    }
-  };
-  // signal that Firebase is ready
-  window._fbReady = true;
-  document.dispatchEvent(new Event('fb-ready'));
-</script>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Baloo+2:wght@700;800&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet"/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Nunito',sans-serif;background:linear-gradient(135deg,#e0f7fa 0%,#fce4ec 50%,#f3e5f5 100%);min-height:100vh;overflow-x:hidden}
-:root{--primary:#6c63ff;--secondary:#ff6584;--accent:#ffb347;--teal:#00bcd4;--green:#4caf50;--bg-card:rgba(255,255,255,0.92);--shadow:0 8px 32px rgba(108,99,255,0.13)}
+:root{
+  --primary:#6c63ff;--secondary:#ff6584;--accent:#ffb347;--teal:#00bcd4;--green:#4caf50;
+  --bg-card:rgba(255,255,255,0.93);--shadow:0 8px 32px rgba(108,99,255,0.13);
+  --indigo:#3d3a8c;--pink:#ff3d71;--lav:#e8e6ff;
+}
+body{font-family:'Nunito',sans-serif;min-height:100vh;overflow-x:hidden;background:#0d0b1e}
 
-/* ===== HEADER ===== */
-header{background:rgba(255,255,255,0.85);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:2px solid rgba(108,99,255,0.12);padding:0 20px;height:64px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 20px rgba(108,99,255,0.1)}
+/* LANDING */
+#landingPage{
+  position:fixed;inset:0;z-index:1000;overflow:hidden;
+  background:radial-gradient(ellipse at 20% 50%,#1a1060 0%,#0d0b1e 60%),
+             radial-gradient(ellipse at 80% 20%,#200a3a 0%,transparent 50%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;
+}
+.stars-canvas{position:absolute;inset:0;pointer-events:none;z-index:0}
+.doodle-layer{position:absolute;inset:0;pointer-events:none;z-index:1;overflow:hidden}
+.orb{position:absolute;border-radius:50%;filter:blur(60px);pointer-events:none;z-index:1;animation:orbFloat 8s ease-in-out infinite}
+.orb-1{width:400px;height:400px;background:radial-gradient(circle,rgba(108,99,255,0.35),transparent 70%);top:-100px;left:-100px;animation-delay:0s}
+.orb-2{width:350px;height:350px;background:radial-gradient(circle,rgba(255,61,113,0.25),transparent 70%);bottom:-80px;right:-80px;animation-delay:-3s}
+.orb-3{width:250px;height:250px;background:radial-gradient(circle,rgba(0,188,212,0.2),transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%);animation-delay:-5s}
+@keyframes orbFloat{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(20px,-20px) scale(1.05)}66%{transform:translate(-15px,15px) scale(0.97)}}
+.land-content{position:relative;z-index:10;text-align:center;max-width:720px;width:100%}
+.land-logo-row{display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:32px}
+.land-cognospace-logo{height:44px;border-radius:10px;filter:drop-shadow(0 4px 20px rgba(108,99,255,0.5))}
+.land-by{font-size:11px;font-weight:700;letter-spacing:2px;color:rgba(255,255,255,0.4);text-transform:uppercase}
+.land-title{
+  font-family:'Baloo 2',cursive;font-size:clamp(60px,12vw,110px);font-weight:800;
+  line-height:0.95;letter-spacing:-2px;
+  background:linear-gradient(135deg,#a78bfa 0%,#f472b6 40%,#fb923c 70%,#facc15 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  margin-bottom:6px;
+  filter:drop-shadow(0 0 40px rgba(167,139,250,0.4));
+  animation:titleGlow 4s ease-in-out infinite alternate;
+}
+@keyframes titleGlow{
+  from{filter:drop-shadow(0 0 30px rgba(167,139,250,0.3))}
+  to{filter:drop-shadow(0 0 60px rgba(244,114,182,0.5))}}
+.land-tagline{
+  font-size:clamp(15px,3vw,20px);color:rgba(255,255,255,0.7);
+  font-weight:600;letter-spacing:0.5px;margin-bottom:40px;line-height:1.5;
+}
+.land-tagline span{
+  background:linear-gradient(135deg,#a78bfa,#f472b6);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-weight:800;
+}
+.land-cta-btn{
+  background:linear-gradient(135deg,#6c63ff,#ff3d71);
+  color:#fff;border:none;border-radius:60px;
+  padding:18px 52px;font-family:'Baloo 2',cursive;font-size:22px;font-weight:800;
+  cursor:pointer;letter-spacing:0.5px;
+  box-shadow:0 8px 40px rgba(108,99,255,0.5),0 0 0 0 rgba(108,99,255,0.3);
+  animation:ctaPulse 2.5s ease-in-out infinite;transition:transform 0.2s,box-shadow 0.2s;
+  position:relative;overflow:hidden;
+}
+.land-cta-btn::before{content:'';position:absolute;inset:0;border-radius:60px;background:linear-gradient(135deg,rgba(255,255,255,0.15),transparent)}
+.land-cta-btn:hover{transform:scale(1.06) translateY(-3px);box-shadow:0 12px 50px rgba(108,99,255,0.65)}
+@keyframes ctaPulse{
+  0%,100%{box-shadow:0 8px 40px rgba(108,99,255,0.5),0 0 0 0 rgba(255,61,113,0.4)}
+  50%{box-shadow:0 8px 40px rgba(108,99,255,0.5),0 0 0 16px rgba(255,61,113,0)}}
+.doodle-icon{
+  position:absolute;font-size:28px;pointer-events:none;z-index:2;
+  animation:doodleFloat 6s ease-in-out infinite;opacity:0.55;
+  filter:drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+}
+@keyframes doodleFloat{
+  0%,100%{transform:translateY(0) rotate(0deg)}
+  33%{transform:translateY(-12px) rotate(5deg)}
+  66%{transform:translateY(6px) rotate(-3deg)}}
+.land-pills{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:28px}
+.land-pill{
+  background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);
+  border-radius:30px;padding:8px 18px;font-size:13px;font-weight:700;
+  color:rgba(255,255,255,0.75);backdrop-filter:blur(8px);
+  display:flex;align-items:center;gap:6px;
+}
+
+/* HEADER */
+header{background:rgba(255,255,255,0.88);backdrop-filter:blur(16px);border-bottom:2px solid rgba(108,99,255,0.12);padding:0 18px;height:64px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 20px rgba(108,99,255,0.1);flex-wrap:wrap;gap:8px}
 .header-left{display:flex;align-items:center;gap:10px}
-.cosmos-title{font-family:'Baloo 2',cursive;font-size:clamp(22px,4vw,32px);font-weight:800;background:linear-gradient(135deg,#6c63ff,#ff6584,#ffb347);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:1px;animation:shimmer 3s linear infinite;background-size:200%}
-@keyframes shimmer{0%{background-position:0%}100%{background-position:200%}}
-.by-text{font-size:12px;color:#aaa;font-weight:600;letter-spacing:1px}
-.logo-wrap{display:flex;align-items:center;gap:6px}
-.cognospace-logo{height:32px;cursor:pointer;transition:transform 0.3s;border-radius:6px}
+.cosmos-title{font-family:'Baloo 2',cursive;font-size:clamp(20px,4vw,30px);font-weight:800;background:linear-gradient(135deg,#6c63ff,#ff6584,#ffb347);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:1px}
+.by-text{font-size:11px;color:#aaa;font-weight:600;letter-spacing:1px}
+.logo-wrap{display:flex;align-items:center;gap:5px}
+.cognospace-logo{height:30px;cursor:pointer;transition:transform 0.3s;border-radius:6px}
 .cognospace-logo:hover{transform:scale(1.08) rotate(-2deg)}
-.stars-badge{background:linear-gradient(135deg,#6c63ff,#ff6584);color:#fff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:0.5px;animation:pulse 2s ease-in-out infinite}
-@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(108,99,255,0.4)}50%{box-shadow:0 0 0 8px rgba(108,99,255,0)}}
-/* Global trained count badge */
-.trained-badge{background:linear-gradient(135deg,#00bcd4,#4caf50);color:#fff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;display:flex;align-items:center;gap:4px;white-space:nowrap}
-
-/* ===== MODE TABS ===== */
-.mode-bar{display:flex;justify-content:center;gap:12px;padding:16px 20px 8px;flex-wrap:wrap}
-.mode-btn{display:flex;align-items:center;gap:8px;padding:10px 28px;border-radius:50px;border:none;cursor:pointer;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;transition:all 0.3s;letter-spacing:0.5px}
+.header-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.session-info-badge{background:linear-gradient(135deg,#6c63ff15,#ff658415);border:1.5px solid rgba(108,99,255,0.2);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700;color:#6c63ff;display:flex;align-items:center;gap:5px;white-space:nowrap}
+#sessionOverlay{position:fixed;inset:0;z-index:1100;background:rgba(13,11,30,0.92);backdrop-filter:blur(12px);display:none;align-items:center;justify-content:center;padding:16px;overflow-y:auto}
+.session-box{background:linear-gradient(145deg,#1a1740,#100e25);border:1.5px solid rgba(108,99,255,0.3);border-radius:28px;padding:32px 28px;max-width:560px;width:100%;box-shadow:0 20px 80px rgba(108,99,255,0.25);animation:popIn 0.4s cubic-bezier(.2,1.4,.4,1);max-height:90vh;overflow-y:auto}
+@keyframes popIn{from{transform:scale(0.75);opacity:0}to{transform:none;opacity:1}}
+.s-input{background:rgba(255,255,255,0.06);border:1.5px solid rgba(255,255,255,0.12);border-radius:12px;padding:11px 14px;font-family:'Nunito',sans-serif;font-size:14px;color:#fff;outline:none;transition:border 0.3s}
+.s-input:focus{border-color:var(--primary);background:rgba(108,99,255,0.08)}
+#appWrapper{display:none;min-height:100vh;background:linear-gradient(135deg,#e0f7fa 0%,#fce4ec 50%,#f3e5f5 100%)}
+header{background:rgba(255,255,255,0.88);backdrop-filter:blur(16px);border-bottom:2px solid rgba(108,99,255,0.12);padding:0 18px;height:64px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 20px rgba(108,99,255,0.1);flex-wrap:wrap;gap:8px}
+.cosmos-title{font-family:'Baloo 2',cursive;font-size:clamp(20px,4vw,30px);font-weight:800;background:linear-gradient(135deg,#6c63ff,#ff6584,#ffb347);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:1px}
+.end-session-btn{background:linear-gradient(135deg,#ff3d71,#ff6584);color:#fff;border:none;border-radius:20px;padding:6px 14px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:800;cursor:pointer;transition:all 0.2s;white-space:nowrap}
+.end-session-btn:hover{transform:scale(1.05);box-shadow:0 4px 15px rgba(255,61,113,0.4)}
+.mode-bar{display:flex;justify-content:center;gap:12px;padding:14px 20px 8px;flex-wrap:wrap}
+.mode-btn{display:flex;align-items:center;gap:8px;padding:10px 26px;border-radius:50px;border:none;cursor:pointer;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;transition:all 0.3s;letter-spacing:0.5px}
 .mode-btn.active{background:linear-gradient(135deg,var(--primary),#9c91ff);color:#fff;box-shadow:0 4px 20px rgba(108,99,255,0.4);transform:translateY(-2px)}
-.mode-btn:not(.active){background:#fff;color:#888;border:2px solid #e0e0e0}
-.mode-btn:not(.active):hover{border-color:var(--primary);color:var(--primary);transform:translateY(-1px)}
-
-/* ===== MAIN LAYOUT ===== */
+.mode-btn:not(.active){background:#fff;color:#888;border:2px solid #e0e0e0;opacity:0.5;cursor:not-allowed}
+.mode-btn:not(.active):hover{opacity:0.5}
 .main-wrap{max-width:900px;margin:0 auto;padding:0 12px 20px}
-
-/* ===== CHAT CONTAINER ===== */
 .chat-section{background:var(--bg-card);border-radius:24px;box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column;height:calc(100vh - 220px);min-height:420px;border:1.5px solid rgba(108,99,255,0.1)}
 .chat-messages{flex:1;overflow-y:auto;padding:20px 16px;display:flex;flex-direction:column;gap:14px;scroll-behavior:smooth}
-.chat-messages::-webkit-scrollbar{width:5px}
-.chat-messages::-webkit-scrollbar-thumb{background:linear-gradient(var(--primary),var(--secondary));border-radius:10px}
-
-/* messages */
 .msg{display:flex;gap:10px;align-items:flex-end;animation:msgIn 0.4s cubic-bezier(.2,1,.3,1)}
 @keyframes msgIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
 .msg.user{flex-direction:row-reverse}
 .avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
 .avatar.bot{background:linear-gradient(135deg,#6c63ff,#ff6584);box-shadow:0 3px 12px rgba(108,99,255,0.35)}
-.avatar.user-av{background:linear-gradient(135deg,#ffb347,#ff6584);box-shadow:0 3px 12px rgba(255,101,132,0.3)}
-
-/* FIX: msg-content wrapper so bubble & meta stack vertically, not horizontally */
-.msg-content{display:flex;flex-direction:column;max-width:75%}
-.msg.user .msg-content{align-items:flex-end}
-.msg.bot  .msg-content{align-items:flex-start}
-
 .bubble{padding:12px 16px;border-radius:18px;font-size:14.5px;line-height:1.6;word-break:break-word}
 .bubble.bot{background:linear-gradient(135deg,#f0eeff,#fce4ec);color:#333;border-bottom-left-radius:4px}
 .bubble.user{background:linear-gradient(135deg,#6c63ff,#9c91ff);color:#fff;border-bottom-right-radius:4px}
-
-/* image-uploaded bubble */
-.img-sent-bubble{display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#e8f5e9,#f1f8e9);border:1.5px solid #a5d6a7;border-radius:14px;padding:10px 14px;font-size:13px;color:#2e7d32;font-weight:700}
-.img-sent-icon{font-size:22px}
-
-.msg-meta{display:flex;align-items:center;gap:6px;margin-top:3px}
-.msg-time{font-size:10px;color:#bbb}
-/* per-message speaker button */
-.speak-btn{background:none;border:none;cursor:pointer;font-size:13px;color:#bbb;padding:0 2px;transition:color 0.2s;line-height:1}
-.speak-btn:hover{color:var(--primary)}
-.hint-badge{display:inline-block;background:#fff3e0;color:#e65100;border-radius:20px;font-size:11px;font-weight:700;padding:2px 10px;margin-bottom:6px;border:1.5px solid #ffcc80}
-
-/* typing indicator */
-.typing-indicator{display:flex;gap:5px;padding:10px 14px;background:#f0eeff;border-radius:18px;border-bottom-left-radius:4px;width:fit-content}
-.typing-dot{width:8px;height:8px;background:var(--primary);border-radius:50%;animation:bounce 1.2s ease-in-out infinite}
-.typing-dot:nth-child(2){animation-delay:0.2s}
-.typing-dot:nth-child(3){animation-delay:0.4s}
-@keyframes bounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-8px)}}
-
-/* ===== INPUT BAR ===== */
-.input-bar{padding:12px 14px;border-top:1.5px solid rgba(108,99,255,0.1);background:rgba(255,255,255,0.9);display:flex;flex-direction:column;gap:6px}
+.training-section{background:var(--bg-card);border-radius:24px;box-shadow:var(--shadow);padding:24px;border:1.5px solid rgba(108,99,255,0.1)}
+.mcq-progress-bar-outer{background:#f0eeff;border-radius:20px;height:10px;overflow:hidden;margin-bottom:6px}
+.mcq-progress-bar{height:100%;background:linear-gradient(90deg,#6c63ff,#ff6584);border-radius:20px;transition:width 0.5s ease}
+.voter-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.voter-chip{font-size:12px;font-weight:700;padding:4px 12px;border-radius:20px;border:2px solid #e0e0e0;background:#f9f9f9;color:#777;cursor:pointer;transition:all 0.2s}
+.voter-chip.selected{background:linear-gradient(135deg,#6c63ff,#9c91ff);color:#fff;border-color:transparent;box-shadow:0 3px 10px rgba(108,99,255,0.3)}
+.mcq-card{background:linear-gradient(135deg,#f8f7ff,#fff5fb);border-radius:20px;padding:22px 20px;border:1.5px solid rgba(108,99,255,0.1);animation:cardIn 0.4s ease}
+@keyframes cardIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.mcq-question{font-family:'Baloo 2',cursive;font-size:18px;font-weight:700;color:#333;margin-bottom:18px;line-height:1.4}
+.mcq-options{display:flex;flex-direction:column;gap:10px}
+.mcq-opt{background:#fff;border:2px solid #e0e0e0;border-radius:14px;padding:13px 16px;font-size:14px;font-weight:700;color:#555;cursor:pointer;transition:all 0.2s;display:flex;align-items:flex-start;gap:10px;text-align:left}
+.mcq-opt:hover{border-color:var(--primary);color:var(--primary);background:#f0eeff}
+.mcq-opt.selected{border-color:var(--primary);background:linear-gradient(135deg,#6c63ff18,#ff658418);color:var(--primary)}
+.mcq-opt.majority{border-color:#4caf50;background:#e8f5e9;color:#2e7d32}
+.mcq-opt-letter{width:26px;height:26px;border-radius:8px;background:#f0eeff;color:var(--primary);font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.mcq-btn{padding:10px 24px;border:none;border-radius:14px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;transition:all 0.2s}
+.mcq-btn-next{background:linear-gradient(135deg,var(--primary),#9c91ff);color:#fff;box-shadow:0 4px 15px rgba(108,99,255,0.35)}
+.mcq-btn-next:hover{transform:translateY(-2px)}
+.mcq-btn-finish{background:linear-gradient(135deg,#4caf50,#8bc34a);color:#fff;box-shadow:0 4px 15px rgba(76,175,80,0.35)}
+.custom-rule-section{margin-top:24px;background:linear-gradient(135deg,#fff9e6,#fff3f3);border:1.5px dashed #ffb347;border-radius:18px;padding:20px}
+.c-input{border:2px solid #ffe0b2;border-radius:12px;padding:10px 13px;font-family:'Nunito',sans-serif;font-size:13.5px;outline:none;transition:border 0.2s;background:#fff}
+.c-input:focus{border-color:#ffb347}
+.add-rule-btn{background:linear-gradient(135deg,#ffb347,#ff6584);color:#fff;border:none;border-radius:12px;padding:10px 20px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;transition:all 0.2s}
+.add-rule-btn:hover{transform:translateY(-2px);box-shadow:0 5px 18px rgba(255,179,71,0.4)}
+.custom-rules-list{margin-top:14px;display:flex;flex-direction:column;gap:8px}
+.custom-rule-item{background:#fff;border-radius:12px;padding:10px 14px;border:1.5px solid #ffe0b2;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;font-size:13px}
+.train-complete{background:linear-gradient(135deg,#4caf50,#8bc34a);color:#fff;border-radius:18px;padding:20px;text-align:center;margin-bottom:20px;display:none;animation:msgIn 0.4s ease}
+.train-complete h3{font-family:'Baloo 2',cursive;font-size:22px;margin-bottom:4px}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.35);z-index:200;display:flex;align-items:center;justify-content:center;animation:fadeIn 0.3s;padding:16px}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.popup{background:#fff;border-radius:24px;padding:28px 24px;max-width:420px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(108,99,255,0.2);animation:popIn 0.4s cubic-bezier(.2,1.4,.4,1)}
+.popup-emoji{font-size:52px;margin-bottom:10px}
+.popup-title{font-family:'Baloo 2',cursive;font-size:22px;font-weight:800;color:var(--primary);margin-bottom:8px}
+.popup-text{font-size:14px;color:#555;line-height:1.7;margin-bottom:18px}
+.popup-btn{background:linear-gradient(135deg,var(--primary),#9c91ff);color:#fff;border:none;border-radius:14px;padding:11px 30px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:transform 0.2s}
+.popup-btn:hover{transform:scale(1.05)}
+.popup-btn-red{background:linear-gradient(135deg,#f44336,#e91e63);color:#fff;border:none;border-radius:14px;padding:11px 30px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:transform 0.2s}
+.popup-btn-red:hover{transform:scale(1.05)}
+.popup-actions{display:flex;gap:10px;justify-content:center}
+.popup-btn-cancel{background:#f0eeff;color:var(--primary);border:2px solid var(--primary);border-radius:14px;padding:11px 24px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:transform 0.2s}
+.popup-btn-cancel:hover{transform:scale(1.03)}
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:linear-gradient(135deg,var(--primary),#9c91ff);color:#fff;padding:10px 22px;border-radius:50px;font-size:14px;font-weight:700;z-index:300;opacity:0;transition:all 0.4s;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+footer{background:linear-gradient(135deg,#1a1a2e,#16213e,#0f3460);color:#fff;text-align:center;padding:24px 20px 16px;margin-top:24px}
+.sparkle{position:fixed;pointer-events:none;font-size:20px;z-index:9999;animation:sparkleAnim 1s forwards}
+@keyframes sparkleAnim{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-60px) scale(0.3)}}
 .input-row{display:flex;gap:8px;flex:1;align-items:flex-end;min-width:0}
 .msg-input{flex:1;border:2px solid #e0e0e0;border-radius:20px;padding:10px 16px;font-family:'Nunito',sans-serif;font-size:14px;resize:none;outline:none;transition:border 0.3s;max-height:100px;overflow-y:auto;min-height:44px}
 .msg-input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(108,99,255,0.1)}
 .icon-btn{width:42px;height:42px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;transition:all 0.3s;flex-shrink:0}
 .send-btn{background:linear-gradient(135deg,var(--primary),#9c91ff);color:#fff;box-shadow:0 3px 12px rgba(108,99,255,0.35)}
 .send-btn:hover{transform:scale(1.1) rotate(5deg)}
-.mic-btn{background:linear-gradient(135deg,#ff6584,#ffb347);color:#fff;box-shadow:0 3px 12px rgba(255,101,132,0.3)}
-.mic-btn:hover{transform:scale(1.1)}
-.mic-btn.recording{animation:recPulse 1s ease-in-out infinite}
-@keyframes recPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,101,132,0.5)}50%{box-shadow:0 0 0 10px rgba(255,101,132,0)}}
-.img-btn{background:linear-gradient(135deg,#00bcd4,#4caf50);color:#fff;box-shadow:0 3px 12px rgba(0,188,212,0.3)}
-.img-btn:hover{transform:scale(1.1)}
-#imgUploadInput{display:none}
-/* translation button */
-.translate-btn{background:linear-gradient(135deg,#9c27b0,#e91e63);color:#fff;box-shadow:0 3px 12px rgba(156,39,176,0.3)}
-.translate-btn:hover{transform:scale(1.1)}
-
-/* ===== GEMINI KEY BAR ===== */
-.api-bar{background:linear-gradient(135deg,#fff9e6,#fff3f3);border:1.5px dashed #ffb347;border-radius:16px;padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.api-bar input{flex:1;border:2px solid #ffe0b2;border-radius:12px;padding:8px 12px;font-family:'Nunito',sans-serif;font-size:13px;outline:none;min-width:160px}
-.api-bar input:focus{border-color:#ffb347}
-.api-connect-btn{background:linear-gradient(135deg,#ffb347,#ff6584);color:#fff;border:none;border-radius:12px;padding:8px 16px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:transform 0.2s}
-.api-connect-btn:hover{transform:scale(1.05)}
-.api-status{font-size:12px;font-weight:700;padding:4px 10px;border-radius:20px}
-.api-status.connected{background:#e8f5e9;color:#2e7d32}
-.api-status.disconnected{background:#fce4ec;color:#c62828}
-
-/* ===== TRAINING MODE ===== */
-.training-section{background:var(--bg-card);border-radius:24px;box-shadow:var(--shadow);padding:24px;border:1.5px solid rgba(108,99,255,0.1)}
-.section-title{font-family:'Baloo 2',cursive;font-size:20px;font-weight:700;color:var(--primary);margin-bottom:16px;display:flex;align-items:center;gap:8px}
-.train-form{display:flex;flex-direction:column;gap:12px}
-.train-input{border:2px solid #e0e0e0;border-radius:14px;padding:11px 14px;font-family:'Nunito',sans-serif;font-size:14px;outline:none;transition:border 0.3s;width:100%}
-.train-input:focus{border-color:var(--primary)}
-.train-label{font-size:12px;font-weight:700;color:#888;margin-bottom:2px}
-.train-field-wrap{display:flex;flex-direction:column;gap:3px}
-.learn-btn{background:linear-gradient(135deg,var(--primary),#9c91ff);color:#fff;border:none;border-radius:14px;padding:12px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;transition:all 0.3s;letter-spacing:0.5px}
-.learn-btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(108,99,255,0.4)}
-.learn-btn:active{transform:scale(0.97)}
-.kb-list{margin-top:20px}
-.kb-item{background:linear-gradient(135deg,#f0eeff,#fce4ec);border-radius:14px;padding:12px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;animation:msgIn 0.4s ease}
-.kb-item-text{font-size:13px;color:#444;flex:1}
-.kb-q{font-weight:700;color:var(--primary)}
-.kb-k{font-weight:600;color:#9c27b0;font-size:12px}
-.kb-a{color:#555}
-.del-btn{background:none;border:none;cursor:pointer;font-size:16px;color:#ff6584;padding:2px 6px;border-radius:8px;transition:background 0.2s}
-.del-btn:hover{background:#fce4ec}
-.train-success{background:#e8f5e9;color:#2e7d32;border-radius:12px;padding:8px 14px;font-size:13px;font-weight:700;display:none;align-items:center;gap:6px}
-
-/* ===== POP-UPS ===== */
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.35);z-index:200;display:flex;align-items:center;justify-content:center;animation:fadeIn 0.3s;padding:16px}
-@keyframes fadeIn{from{opacity:0}to{opacity:1}}
-.popup{background:#fff;border-radius:24px;padding:28px 24px;max-width:420px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(108,99,255,0.2);animation:popIn 0.4s cubic-bezier(.2,1.4,.4,1)}
-@keyframes popIn{from{transform:scale(0.7);opacity:0}to{transform:none;opacity:1}}
-.popup-emoji{font-size:52px;margin-bottom:10px}
-.popup-title{font-family:'Baloo 2',cursive;font-size:22px;font-weight:800;color:var(--primary);margin-bottom:8px}
-.popup-text{font-size:14px;color:#555;line-height:1.7;margin-bottom:18px}
-.popup-btn{background:linear-gradient(135deg,var(--primary),#9c91ff);color:#fff;border:none;border-radius:14px;padding:11px 30px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:transform 0.2s}
-.popup-btn:hover{transform:scale(1.05)}
-.popup-hint{background:#fff3e0;border-radius:12px;padding:10px 14px;font-size:13px;color:#e65100;font-weight:600;margin-bottom:16px}
-
-/* Translation popup */
-.translate-popup .popup{max-width:380px;text-align:left}
-.lang-select{width:100%;border:2px solid #e0e0e0;border-radius:12px;padding:10px 14px;font-family:'Nunito',sans-serif;font-size:14px;outline:none;margin-bottom:12px;cursor:pointer}
-.lang-select:focus{border-color:var(--primary)}
-.lang-row{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
-.lang-label{font-size:12px;font-weight:700;color:#888}
-.popup-actions{display:flex;gap:10px;justify-content:center}
-.popup-btn-cancel{background:#f0eeff;color:var(--primary);border:2px solid var(--primary);border-radius:14px;padding:11px 24px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:transform 0.2s}
-.popup-btn-cancel:hover{transform:scale(1.03)}
-
-/* End Topic popup */
-#endTopicOverlay .popup{max-width:360px}
-
-/* ===== TOAST ===== */
-.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:linear-gradient(135deg,var(--primary),#9c91ff);color:#fff;padding:10px 22px;border-radius:50px;font-size:14px;font-weight:700;z-index:300;opacity:0;transition:all 0.4s;pointer-events:none;white-space:nowrap}
-.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-
-/* ===== PASSWORD MODAL ===== */
-#passwordOverlay .popup{max-width:380px;text-align:center}
-.pw-input-wrap{position:relative;margin:14px 0}
-.pw-input{width:100%;border:2px solid #e0e0e0;border-radius:14px;padding:12px 44px 12px 16px;font-family:'Nunito',sans-serif;font-size:18px;font-weight:800;outline:none;text-align:center;transition:border 0.3s}
-.pw-input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(108,99,255,0.1)}
-.pw-input.error{border-color:#f44336;animation:shake 0.5s ease-in-out}
-.pw-error-msg{color:#f44336;font-size:12px;font-weight:700;margin-top:6px;display:none}
-.pw-hint{background:#fff3e0;border-radius:10px;padding:8px 14px;font-size:12px;color:#e65100;font-weight:700;margin-bottom:12px}
-.lock-icon-anim{font-size:56px;animation:lockBounce 0.6s ease-in-out}
-@keyframes lockBounce{0%,100%{transform:scale(1)}50%{transform:scale(1.2) rotate(-8deg)}}
-
-/* ===== FOOTER ===== */
-footer{background:linear-gradient(135deg,#1a1a2e,#16213e,#0f3460);color:#fff;text-align:center;padding:24px 20px 16px;margin-top:24px}
-.footer-logo-row{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:8px}
-.footer-cosmos{font-family:'Baloo 2',cursive;font-size:22px;font-weight:800;background:linear-gradient(135deg,#6c63ff,#ff6584,#ffb347);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.footer-sub{font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:6px}
-.footer-divider{border:none;border-top:1px solid rgba(255,255,255,0.1);margin:12px auto;width:80%}
-.footer-credits{font-size:12px;color:rgba(255,255,255,0.4);letter-spacing:0.5px}
-.footer-credits a{color:rgba(108,99,255,0.8);text-decoration:none;font-weight:700}
-.footer-credits a:hover{color:#9c91ff}
-.footer-stars{font-size:18px;letter-spacing:4px;margin-bottom:4px}
-
-/* ===== SPARKLES ===== */
-.sparkle{position:fixed;pointer-events:none;font-size:20px;z-index:9999;animation:sparkleAnim 1s forwards}
-@keyframes sparkleAnim{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-60px) scale(0.3)}}
-
-/* ===== RESPONSIVE ===== */
-@media(max-width:600px){
-  .chat-section{height:calc(100vh - 240px)}
-  .bubble{max-width:88%}
-  .mode-btn{padding:8px 18px;font-size:13px}
-  .api-bar{flex-direction:column}
-  header{padding:0 12px}
-  .cosmos-title{font-size:22px}
-}
-@media(max-width:380px){
-  .bubble{max-width:92%;font-size:13.5px}
-  .input-row{gap:5px}
-  .icon-btn{width:38px;height:38px;font-size:16px}
-}
-
-/* ===== BAD USE WARNING POPUP ===== */
-#badUseOverlay .popup{border-top:5px solid #f44336;max-width:360px}
-.popup-emoji-warn{font-size:58px;margin-bottom:6px;animation:shake 0.5s ease-in-out}
-@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
-.popup-title-warn{font-family:'Baloo 2',cursive;font-size:21px;font-weight:800;color:#d32f2f;margin-bottom:8px}
-.popup-warn-box{background:#fff3f3;border:1.5px solid #ffcdd2;border-radius:12px;padding:12px 14px;font-size:13.5px;color:#b71c1c;font-weight:700;margin-bottom:16px;line-height:1.6}
-.popup-btn-red{background:linear-gradient(135deg,#f44336,#e91e63);color:#fff;border:none;border-radius:14px;padding:11px 30px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:transform 0.2s}
-.popup-btn-red:hover{transform:scale(1.05)}
-
-/* ===== WELCOME BANNER ===== */
-.welcome-card{background:linear-gradient(135deg,#6c63ff,#ff6584);border-radius:20px;color:#fff;padding:18px 20px;margin-bottom:14px;text-align:center}
-.welcome-card h2{font-family:'Baloo 2',cursive;font-size:18px;margin-bottom:4px}
-.welcome-card p{font-size:13px;opacity:0.9;line-height:1.5}
-.quick-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;justify-content:center}
-.chip{background:rgba(255,255,255,0.25);border:1.5px solid rgba(255,255,255,0.4);color:#fff;border-radius:20px;padding:5px 14px;font-size:12px;font-weight:700;cursor:pointer;transition:all 0.2s;backdrop-filter:blur(4px)}
-.chip:hover{background:rgba(255,255,255,0.4);transform:scale(1.05)}
-
-/* image preview bar */
-.img-preview-wrap{display:none;align-items:center;gap:6px;padding:6px 10px;background:#f0eeff;border-radius:12px;margin-bottom:4px;width:100%}
-.img-preview-wrap img{width:40px;height:40px;border-radius:8px;object-fit:cover}
-.img-preview-name{font-size:12px;color:#555;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.img-clear-btn{background:none;border:none;cursor:pointer;color:#ff6584;font-size:16px}
-
-/* context banner */
-.context-bar{background:linear-gradient(135deg,#e8f5e9,#f1f8e9);border:1.5px solid #a5d6a7;border-radius:12px;padding:7px 14px;font-size:12px;color:#2e7d32;font-weight:700;display:none;align-items:center;gap:6px;margin-bottom:6px}
-
-/* ===== BUILD MODE ===== */
-.build-intro-banner{background:linear-gradient(135deg,#e8f4ff,#f0e8ff);border:2px dashed #a78bfa;border-radius:18px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;gap:14px}
-.build-layout{display:grid;grid-template-columns:190px 1fr 210px;gap:12px;align-items:start}
-@media(max-width:750px){.build-layout{grid-template-columns:1fr}}
-
-/* Palette */
-.block-palette{background:rgba(255,255,255,0.95);border-radius:18px;padding:14px 12px;box-shadow:0 4px 20px rgba(108,99,255,0.1);border:1.5px solid rgba(108,99,255,0.12);position:sticky;top:72px;max-height:calc(100vh - 160px);overflow-y:auto}
-.palette-title{font-family:'Baloo 2',cursive;font-size:15px;font-weight:800;color:var(--primary);margin-bottom:10px}
-.palette-category{font-size:10px;font-weight:800;color:#aaa;letter-spacing:1px;text-transform:uppercase;margin:8px 0 4px}
-.block-chip{background:#fff;border:2px solid #e0e0e0;border-radius:10px;padding:8px 10px;font-size:12.5px;font-weight:700;cursor:grab;margin-bottom:6px;display:flex;align-items:center;gap:6px;transition:all 0.2s;user-select:none;color:#333}
-.block-chip:hover{border-color:var(--primary);background:#f0eeff;color:var(--primary);transform:translateX(3px)}
-.block-chip:active{cursor:grabbing}
-
-/* Canvas */
-.build-canvas-wrap{background:rgba(255,255,255,0.95);border-radius:18px;padding:14px;box-shadow:0 4px 20px rgba(108,99,255,0.1);border:1.5px solid rgba(108,99,255,0.12)}
-.canvas-title{font-family:'Baloo 2',cursive;font-size:15px;font-weight:800;color:var(--primary);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
-.canvas-action-btn{background:#f0eeff;border:none;border-radius:10px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;color:var(--primary);transition:all 0.2s}
-.canvas-action-btn:hover{background:var(--primary);color:#fff}
-.preview-btn{background:linear-gradient(135deg,#6c63ff,#9c91ff)!important;color:#fff!important}
-.build-canvas{min-height:380px;border:2.5px dashed #c4b5fd;border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:8px;background:repeating-linear-gradient(45deg,#fafafe,#fafafe 10px,#f5f0ff 10px,#f5f0ff 20px);transition:all 0.3s;position:relative}
-.build-canvas.drag-over{background:linear-gradient(135deg,#ede9ff,#fff0fa)!important;border-color:var(--primary);border-style:solid}
-.canvas-drop-hint{color:#c4b5fd;font-size:13px;font-weight:700;text-align:center;padding:50px 16px;line-height:1.9;pointer-events:none;position:absolute;top:0;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px}
-
-/* Placed Blocks */
-.placed-block{border-radius:12px;padding:10px 12px;font-size:13px;font-weight:600;display:flex;align-items:flex-start;gap:8px;border:2px solid transparent;transition:border 0.2s;position:relative}
-.placed-block:hover{border-color:rgba(108,99,255,0.35)}
-.placed-block-label{font-weight:800;font-size:10px;opacity:0.65;white-space:nowrap;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px}
-.placed-block-body{flex:1;display:flex;flex-direction:column;gap:4px}
-.placed-block input[type=text],.placed-block input[type=number],.placed-block textarea{border:1.5px solid rgba(0,0,0,0.13);border-radius:8px;padding:5px 9px;font-family:'Nunito',sans-serif;font-size:12.5px;width:100%;outline:none;background:rgba(255,255,255,0.75);transition:border 0.2s}
-.placed-block input:focus,.placed-block textarea:focus{border-color:var(--primary);background:#fff}
-.block-del-btn{background:none;border:none;cursor:pointer;font-size:15px;color:#ff6584;opacity:0.5;padding:0 2px;flex-shrink:0;line-height:1;transition:opacity 0.2s}
-.block-del-btn:hover{opacity:1}
-.block-move-btns{display:flex;flex-direction:column;gap:1px;flex-shrink:0;margin-top:2px}
-.block-mv-btn{background:none;border:none;cursor:pointer;font-size:11px;opacity:0.35;padding:0;line-height:1.4;transition:opacity 0.2s}
-.block-mv-btn:hover{opacity:1}
-.block-connector{height:8px;display:flex;align-items:center;justify-content:center;color:#c4b5fd;font-size:10px;font-weight:800;letter-spacing:2px;pointer-events:none}
-
-/* Info panel */
-.build-info-panel{background:rgba(255,255,255,0.95);border-radius:18px;padding:14px;box-shadow:0 4px 20px rgba(108,99,255,0.1);border:1.5px solid rgba(108,99,255,0.12);position:sticky;top:72px;max-height:calc(100vh - 160px);overflow-y:auto}
-
-/* ===== LANDING PAGE ===== */
-#landingPage{position:fixed;inset:0;z-index:500;background:linear-gradient(135deg,#0f0c29,#302b63,#24243e);display:flex;align-items:center;justify-content:center;overflow:hidden}
-.landing-stars{position:absolute;inset:0;overflow:hidden;pointer-events:none}
-.landing-star{position:absolute;background:#fff;border-radius:50%;animation:twinkle var(--dur,3s) ease-in-out infinite;opacity:0}
-@keyframes twinkle{0%,100%{opacity:0;transform:scale(0.5)}50%{opacity:var(--op,0.8);transform:scale(1)}}
-.landing-center{position:relative;z-index:2;text-align:center;padding:24px 20px;max-width:520px;width:100%}
-.landing-logo-wrap{margin-bottom:10px;animation:floatLogo 4s ease-in-out infinite}
-@keyframes floatLogo{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
-.landing-cosmos{font-family:'Baloo 2',cursive;font-size:clamp(52px,10vw,80px);font-weight:800;background:linear-gradient(135deg,#a78bfa,#f472b6,#fb923c);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1;letter-spacing:2px;filter:drop-shadow(0 0 30px rgba(167,139,250,0.5))}
-.landing-tagline{font-size:clamp(13px,2.5vw,16px);color:rgba(255,255,255,0.65);font-weight:600;letter-spacing:1px;margin:6px 0 4px}
-.landing-by{font-size:12px;color:rgba(255,255,255,0.35);font-weight:600;letter-spacing:2px;text-transform:uppercase;margin-bottom:40px}
-.landing-by a{color:rgba(167,139,250,0.7);text-decoration:none;font-weight:800;transition:color 0.2s}
-.landing-by a:hover{color:#a78bfa}
-.landing-divider{width:60px;height:3px;background:linear-gradient(90deg,#a78bfa,#f472b6);border-radius:10px;margin:0 auto 32px;animation:dividerGrow 1s ease forwards;transform-origin:center}
-@keyframes dividerGrow{from{width:0}to{width:60px}}
-.landing-buttons{display:flex;flex-direction:column;gap:16px;align-items:center}
-.landing-btn{width:100%;max-width:340px;padding:16px 24px;border-radius:20px;border:none;cursor:pointer;font-family:'Nunito',sans-serif;font-size:17px;font-weight:800;display:flex;align-items:center;justify-content:space-between;transition:all 0.35s;position:relative;overflow:hidden;letter-spacing:0.3px}
-.landing-btn::before{content:'';position:absolute;inset:0;background:rgba(255,255,255,0);transition:background 0.3s}
-.landing-btn:hover::before{background:rgba(255,255,255,0.08)}
-.landing-btn:hover{transform:translateY(-3px) scale(1.02);box-shadow:0 12px 40px rgba(0,0,0,0.4)}
-.landing-btn:active{transform:scale(0.98)}
-.lbtn-live{background:linear-gradient(135deg,#6c63ff,#9c91ff);box-shadow:0 6px 24px rgba(108,99,255,0.5);color:#fff}
-.lbtn-train{background:linear-gradient(135deg,#f093fb,#f5576c);box-shadow:0 6px 24px rgba(245,87,108,0.4);color:#fff}
-.lbtn-build{background:linear-gradient(135deg,#43e97b,#38f9d7);box-shadow:0 6px 24px rgba(67,233,123,0.35);color:#1a3a2a}
-.lbtn-left{display:flex;align-items:center;gap:12px}
-.lbtn-icon{font-size:26px;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.2))}
-.lbtn-text{text-align:left}
-.lbtn-title{font-size:16px;font-weight:800;line-height:1.2}
-.lbtn-sub{font-size:11px;opacity:0.75;font-weight:600;margin-top:1px}
-.lbtn-badge{font-size:18px;opacity:0.85}
-.landing-footer{margin-top:36px;font-size:11px;color:rgba(255,255,255,0.25);letter-spacing:0.5px}
-.landing-orbs{position:absolute;inset:0;pointer-events:none;overflow:hidden}
-.orb{position:absolute;border-radius:50%;filter:blur(80px);animation:orbFloat var(--dur,20s) ease-in-out infinite alternate;opacity:0.18}
-@keyframes orbFloat{0%{transform:translate(0,0)}100%{transform:translate(var(--tx,40px),var(--ty,-40px))}}
-/* hide main app until landing is dismissed */
-#appShell{display:none}
+.input-bar{padding:12px 14px;border-top:1.5px solid rgba(108,99,255,0.1);background:rgba(255,255,255,0.9);display:flex;flex-direction:column;gap:6px}
 </style>
 </head>
 <body>
 
-<!-- ===== LANDING PAGE ===== -->
 <div id="landingPage">
-  <!-- Ambient orbs -->
-  <div class="landing-orbs">
-    <div class="orb" style="width:400px;height:400px;background:#6c63ff;top:-100px;left:-100px;--dur:18s;--tx:60px;--ty:40px"></div>
-    <div class="orb" style="width:300px;height:300px;background:#f472b6;bottom:-80px;right:-80px;--dur:22s;--tx:-50px;--ty:-60px"></div>
-    <div class="orb" style="width:200px;height:200px;background:#fb923c;top:40%;left:60%;--dur:15s;--tx:-40px;--ty:50px"></div>
-  </div>
-  <!-- Twinkling stars (generated by JS) -->
-  <div class="landing-stars" id="landingStars"></div>
+  <!-- Star canvas -->
+  <canvas class="stars-canvas" id="starsCanvas"></canvas>
 
-  <div class="landing-center">
-    <!-- Logo -->
-    <div class="landing-logo-wrap">
-      <div class="landing-cosmos">✦ COSMOS</div>
-    </div>
-    <div class="landing-tagline">Your Friendly AI Learning Companion 🚀</div>
-    <div class="landing-by">
-      <span style="font-size:10px;color:rgba(255,255,255,0.35);font-weight:700;letter-spacing:2px;text-transform:uppercase;display:block;margin-bottom:6px">BY</span>
-      <a href="https://www.cognospace.in" target="_blank" style="display:inline-block;transition:transform 0.3s,filter 0.3s" onmouseover="this.style.transform='scale(1.06)';this.style.filter='brightness(1.15)'" onmouseout="this.style.transform='scale(1)';this.style.filter='brightness(1)'">
-        <img src="cognospace_logo.png" alt="Cognospace" style="height:44px;filter:drop-shadow(0 0 12px rgba(167,139,250,0.5)) brightness(1.1)"/>
+  <!-- Floating orbs -->
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+
+  <!-- Doodle floating icons -->
+  <div class="doodle-icon" style="top:8%;left:7%;animation-delay:0s;font-size:32px">🤖</div>
+  <div class="doodle-icon" style="top:15%;right:8%;animation-delay:-1.5s;font-size:26px">💡</div>
+  <div class="doodle-icon" style="top:75%;left:5%;animation-delay:-2s;font-size:30px">🧠</div>
+  <div class="doodle-icon" style="top:80%;right:7%;animation-delay:-0.8s;font-size:28px">✨</div>
+  <div class="doodle-icon" style="top:40%;left:3%;animation-delay:-3s;font-size:24px">📚</div>
+  <div class="doodle-icon" style="top:55%;right:4%;animation-delay:-1.2s;font-size:26px">🔬</div>
+  <div class="doodle-icon" style="top:25%;left:18%;animation-delay:-2.5s;font-size:20px">⭐</div>
+  <div class="doodle-icon" style="top:65%;right:18%;animation-delay:-4s;font-size:22px">🌙</div>
+  <div class="doodle-icon" style="top:5%;left:45%;animation-delay:-1s;font-size:22px">🪐</div>
+  <div class="doodle-icon" style="top:88%;left:35%;animation-delay:-3.5s;font-size:20px">🚀</div>
+
+  <!-- SVG doodle layer -->
+  <svg class="doodle-layer" viewBox="0 0 1400 800" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+    <g opacity="0.08" stroke="rgba(167,139,250,1)" stroke-width="1.5" fill="none">
+      <circle cx="200" cy="150" r="80" stroke-dasharray="8 6"/>
+      <circle cx="1200" cy="600" r="120" stroke-dasharray="10 8"/>
+      <circle cx="700" cy="400" r="200" stroke-dasharray="6 10"/>
+      <path d="M50,700 Q350,400 650,600 Q950,800 1350,300" stroke-dasharray="12 6"/>
+      <path d="M0,300 Q300,100 600,250 Q900,400 1400,200" stroke-dasharray="8 8"/>
+      <path d="M100,800 C300,650 500,750 700,600 C900,450 1100,550 1400,400" stroke-dasharray="6 12"/>
+    </g>
+    <g opacity="0.12" fill="rgba(244,114,182,1)">
+      <polygon points="120,80 135,108 105,108"/>
+      <polygon points="1300,120 1315,148 1285,148"/>
+      <rect x="80" y="400" width="20" height="20" transform="rotate(45,90,410)"/>
+      <rect x="1320" y="450" width="18" height="18" transform="rotate(30,1329,459)"/>
+    </g>
+    <g opacity="0.1" fill="rgba(251,146,60,1)">
+      <circle cx="350" cy="700" r="12"/>
+      <circle cx="1050" cy="150" r="10"/>
+      <circle cx="950" cy="700" r="8"/>
+    </g>
+  </svg>
+
+  <!-- Main content -->
+  <div class="land-content">
+    <!-- Logo row -->
+    <div class="land-logo-row">
+      <a href="https://www.cognospace.in" title="Cognospace">
+        <img src="cognospace_logo.png" alt="Cognospace" class="land-cognospace-logo"
+          onerror="this.style.display='none';document.getElementById('landCognoText').style.display='inline'"/>
+        <span id="landCognoText" style="display:none;font-family:'Baloo 2',cursive;font-size:20px;font-weight:800;background:linear-gradient(135deg,#a78bfa,#f472b6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">Cognospace</span>
       </a>
+      <span class="land-by">presents</span>
     </div>
-    <div class="landing-divider"></div>
 
-    <!-- Mode Buttons -->
-    <div class="landing-buttons">
+    <!-- Title -->
+    <div class="land-title">COSMOS</div>
 
-      <button class="landing-btn lbtn-live" onclick="landingEnter('live')">
-        <div class="lbtn-left">
-          <span class="lbtn-icon">🚀</span>
-          <div class="lbtn-text">
-            <div class="lbtn-title">Live Mode</div>
-            <div class="lbtn-sub">Chat with COSMOS AI in real time</div>
-          </div>
-        </div>
-        <span class="lbtn-badge">🔒</span>
-      </button>
-
-      <button class="landing-btn lbtn-train" onclick="landingEnter('train')">
-        <div class="lbtn-left">
-          <span class="lbtn-icon">🧠</span>
-          <div class="lbtn-text">
-            <div class="lbtn-title">Training Mode</div>
-            <div class="lbtn-sub">Teach COSMOS new knowledge</div>
-          </div>
-        </div>
-        <span class="lbtn-badge">🔒</span>
-      </button>
-
-      <button class="landing-btn lbtn-build" onclick="landingEnter('build')">
-        <div class="lbtn-left">
-          <span class="lbtn-icon">🧱</span>
-          <div class="lbtn-text">
-            <div class="lbtn-title">Build Mode</div>
-            <div class="lbtn-sub">Design your own chatbot with blocks</div>
-          </div>
-        </div>
-        <span class="lbtn-badge">🆓</span>
-      </button>
-
+    <!-- Tagline -->
+    <div class="land-tagline">
+      The AI Ethics Classroom Experience<br/>
+      <span>Train it. Rule it. Use it responsibly.</span>
     </div>
-    <div class="landing-footer">© 2026 Cognospace · All Rights Reserved</div>
+
+    <!-- CTA -->
+    <button class="land-cta-btn" onclick="openSessionSetup()">🚀 Start a Session</button>
+
+    <!-- Feature pills -->
+    <div class="land-pills">
+      <div class="land-pill">🧠 MCQ Ethics Training</div>
+      <div class="land-pill">⚡ Gemini AI Powered</div>
+      <div class="land-pill">🗳️ Group Majority Voting</div>
+      <div class="land-pill">🔒 Custom Rules Engine</div>
+      <div class="land-pill">💾 Offline-first Storage</div>
+    </div>
   </div>
 </div>
 
-<!-- ===== MAIN APP SHELL (hidden until landing dismisses) ===== -->
-<div id="appShell">
-
-<!-- ===== HEADER ===== -->
-<header>
-  <div class="header-left">
-    <div>
-      <div class="cosmos-title">✦ COSMOS</div>
+<div id="sessionOverlay">
+  <div class="session-box">
+    <div style="font-family:'Baloo 2',cursive;font-size:26px;font-weight:800;background:linear-gradient(135deg,#a78bfa,#f472b6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:6px;text-align:center">⚙️ New Session Setup</div>
+    <div style="font-size:13px;color:rgba(255,255,255,0.5);text-align:center;margin-bottom:24px">Fill in the details and name all participants to begin</div>
+    <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:16px">
+      <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.45);letter-spacing:1px;text-transform:uppercase">School Name</div>
+      <input type="text" class="s-input" id="schoolName" placeholder="e.g. Cognospace Academy"/>
     </div>
-    <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
-      <span class="by-text">BY</span>
-      <div class="logo-wrap">
-        <a href="https://www.cognospace.in" id="cognoLogoLink" title="Visit Cognospace">
-          <img src="cognospace_logo.png" alt="Cognospace" class="cognospace-logo"
-            onerror="this.style.display='none';document.getElementById('cognoText').style.display='block'"/>
-          <span id="cognoText" style="display:none;font-family:'Baloo 2',cursive;font-size:15px;font-weight:800;background:linear-gradient(135deg,#6c63ff,#ff6584);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">Cognospace</span>
-        </a>
-      </div>
+    <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:16px">
+      <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.45);letter-spacing:1px;text-transform:uppercase">Class & Section</div>
+      <input type="text" class="s-input" id="classSection" placeholder="e.g. Grade 8 – Section A"/>
     </div>
+    <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:16px">
+      <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.45);letter-spacing:1px;text-transform:uppercase">Number of Users (max 20)</div>
+      <input type="number" class="s-input" id="numUsers" placeholder="e.g. 5" min="1" max="20" oninput="generateUserNameFields()"/>
+    </div>
+    <div id="userNamesSection" style="display:none">
+      <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.45);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">Enter User Names</div>
+      <div id="userNamesGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-bottom:16px"></div>
+    </div>
+    <button style="width:100%;background:linear-gradient(135deg,#6c63ff,#ff3d71);color:#fff;border:none;border-radius:14px;padding:14px;font-family:'Baloo 2',cursive;font-size:18px;font-weight:800;cursor:pointer;transition:all 0.25s;margin-top:4px;letter-spacing:0.5px" onclick="launchSession()">🚀 Launch COSMOS</button>
   </div>
-  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-    <span class="trained-badge">🌍 <span id="globalTrainedCount">0</span> trained globally</span>
-    <span class="stars-badge">🌟 AI Ethics</span>
-  </div>
-</header>
-
-<!-- ===== MODE TABS ===== -->
-<div class="mode-bar">
-  <button class="mode-btn active" id="btnLive" onclick="requestModeSwitch('live')">🚀 Live Mode 🔒</button>
-  <button class="mode-btn" id="btnTrain" onclick="requestModeSwitch('train')">🧠 Training Mode 🔒</button>
-  <button class="mode-btn" id="btnBuild" onclick="requestModeSwitch('build')">🧱 Build Mode</button>
-  <button class="mode-btn" id="btnPreview" onclick="switchMode('preview')" style="display:none">👁️ Preview Mode</button>
 </div>
 
-<!-- ===== MAIN WRAP ===== -->
-<div class="main-wrap">
-
-  <!-- ====== LIVE MODE ====== -->
-  <div id="liveSection">
-    <!-- Gemini API bar -->
-    <div class="api-bar">
-      <span style="font-size:18px">🔑</span>
-      <input type="password" id="geminiKeyInput" placeholder="Paste your Gemini API key here (optional)…" style="flex:1"/>
-      <button class="api-connect-btn" onclick="connectGemini()">Connect Gemini ✨</button>
-      <span class="api-status disconnected" id="apiStatus">⚡ Offline</span>
-    </div>
-
-    <!-- Context bar -->
-    <div class="context-bar" id="contextBar">
-      📌 Active topic: <strong id="contextTopicLabel"></strong>
-    </div>
-
-    <!-- Image preview bar -->
-    <div class="img-preview-wrap" id="imgPreviewWrap">
-      <img id="imgPreviewThumb" src="" alt="preview"/>
-      <span class="img-preview-name" id="imgPreviewName"></span>
-      <button class="img-clear-btn" onclick="clearImage()">✕</button>
-    </div>
-
-    <!-- Chat window -->
-    <div class="chat-section">
-      <div class="chat-messages" id="chatMessages">
-        <div class="welcome-card">
-          <h2>👋 Hi there, Explorer!</h2>
-          <p>I'm <strong>COSMOS</strong> — your friendly AI learning buddy!<br/>Ask me anything about school, science, maths, history & more!</p>
-          <div class="quick-chips">
-            <span class="chip" onclick="sendChip(this)">🔢 Maths help</span>
-            <span class="chip" onclick="sendChip(this)">🔬 Science facts</span>
-            <span class="chip" onclick="sendChip(this)">📚 Study tips</span>
-            <span class="chip" onclick="sendChip(this)">🌍 History</span>
-            <span class="chip" onclick="sendChip(this)">💻 What is AI?</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Input bar -->
-      <div class="input-bar">
-        <div class="input-row" style="width:100%">
-          <label for="imgUploadInput" class="icon-btn img-btn" title="Upload image">📷</label>
-          <input type="file" id="imgUploadInput" accept="image/*" onchange="handleImageUpload(event)"/>
-          <!-- Translation button -->
-          <button class="icon-btn translate-btn" title="Translate" onclick="openTranslatePopup()">🌐</button>
-          <textarea class="msg-input" id="msgInput" placeholder="Ask me anything… 🌟" rows="1"
-            onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage()}"
-            oninput="autoResize(this)"></textarea>
-          <button class="icon-btn mic-btn" id="micBtn" title="Speak your question" onclick="toggleMic()">🎙️</button>
-          <button class="icon-btn send-btn" onclick="sendMessage()" title="Send">➤</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ====== TRAINING MODE ====== -->
-  <div id="trainSection" style="display:none">
-    <div class="training-section">
-      <div class="section-title">🧠 Train COSMOS</div>
-      <p style="font-size:13.5px;color:#777;margin-bottom:16px;line-height:1.6">
-        Teach me new things! Your training is saved <strong>globally</strong> so other users benefit too! 🌍
-      </p>
-
-      <div class="train-form">
-        <div class="train-field-wrap">
-          <div class="train-label">❓ QUESTION</div>
-          <input type="text" class="train-input" id="trainQ" placeholder="e.g. What is Cognospace?"/>
-        </div>
-        <div class="train-field-wrap">
-          <div class="train-label">🏷️ KEYWORDS (comma separated)</div>
-          <input type="text" class="train-input" id="trainK" placeholder="e.g. cognospace, cosmos, learning platform"/>
-        </div>
-        <div class="train-field-wrap">
-          <div class="train-label">💡 ANSWER</div>
-          <textarea class="train-input" id="trainA" placeholder="e.g. Cognospace is an EdTech platform…" rows="3" style="resize:vertical"></textarea>
-        </div>
-        <button class="learn-btn" onclick="learnData()">🎓 Learn This! (Save Globally)</button>
-        <div class="train-success" id="trainSuccess">✅ Learnt! Shared with all COSMOS users worldwide! 🌍</div>
-      </div>
-
-      <div class="kb-list" id="kbList">
-        <div style="font-family:'Baloo 2',cursive;font-size:16px;color:#aaa;margin-top:4px">📚 Trained Knowledge (Global + Local)</div>
-        <div id="kbItems" style="margin-top:10px"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ====== BUILD MODE ====== -->
-  <div id="buildSection" style="display:none">
-    <div class="build-intro-banner">
-      <span style="font-size:28px">🧱</span>
+<div id="appWrapper">
+  <!-- HEADER -->
+  <header>
+    <div class="header-left">
       <div>
-        <div style="font-family:'Baloo 2',cursive;font-size:18px;font-weight:800;color:#6c63ff">Build Your Own Chatbot!</div>
-        <div style="font-size:13px;color:#777">Drag blocks from the palette → drop onto canvas → fill in details → click ▶️ Preview! 🚀</div>
+        <div class="cosmos-title">✦ COSMOS</div>
       </div>
-    </div>
-
-    <div class="build-layout">
-      <!-- LEFT: Block Palette -->
-      <div class="block-palette">
-        <div class="palette-title">🎨 Blocks</div>
-
-        <div class="palette-category">📄 Page Layout</div>
-        <div class="block-chip" draggable="true" data-block="header">🏠 Header</div>
-        <div class="block-chip" draggable="true" data-block="hero">🌟 Hero Banner</div>
-        <div class="block-chip" draggable="true" data-block="chatwindow">💬 Chat Window</div>
-        <div class="block-chip" draggable="true" data-block="colorpicker">🎨 Background Color</div>
-        <div class="block-chip" draggable="true" data-block="footer">📌 Footer</div>
-        <div class="block-chip" draggable="true" data-block="divider">➖ Divider</div>
-        <div class="block-chip" draggable="true" data-block="announcement">📢 Announcement Bar</div>
-
-        <div class="palette-category" style="margin-top:10px">🤖 Bot Logic</div>
-        <div class="block-chip" draggable="true" data-block="greet">👋 Greeting Message</div>
-        <div class="block-chip" draggable="true" data-block="ifsays">🔍 If user says…</div>
-        <div class="block-chip" draggable="true" data-block="botreply">💬 Bot replies…</div>
-        <div class="block-chip" draggable="true" data-block="hint">💡 Give a Hint</div>
-        <div class="block-chip" draggable="true" data-block="cheer">🎉 Cheer / Praise</div>
-        <div class="block-chip" draggable="true" data-block="quiz">❓ Ask a Question</div>
-        <div class="block-chip" draggable="true" data-block="askname">🙋 Ask user's name</div>
-        <div class="block-chip" draggable="true" data-block="emoji">😄 Add Emoji</div>
-        <div class="block-chip" draggable="true" data-block="delay">⏱️ Typing Delay</div>
-        <div class="block-chip" draggable="true" data-block="fallback">🤷 Fallback Reply</div>
-        <div class="block-chip" draggable="true" data-block="goodbye">👋 Goodbye Message</div>
-
-        <div class="palette-category" style="margin-top:10px">🌟 AI Power</div>
-        <div class="block-chip" draggable="true" data-block="gemini" style="border-color:#4285f4;color:#1a73e8;background:linear-gradient(135deg,#e8f0fe,#fff)">✨ Gemini AI Block</div>
-        <div class="block-chip" draggable="true" data-block="smartreply">🧠 Smart Reply Mode</div>
-
-        <div class="palette-category" style="margin-top:10px">🎮 Engagement</div>
-        <div class="block-chip" draggable="true" data-block="poll">📊 Quick Poll</div>
-        <div class="block-chip" draggable="true" data-block="funfact">🌍 Fun Fact</div>
-        <div class="block-chip" draggable="true" data-block="riddle">🎭 Riddle Block</div>
-        <div class="block-chip" draggable="true" data-block="badge">🏅 Award Badge</div>
-
-        <div style="margin-top:14px;padding:10px;background:#f0eeff;border-radius:12px;font-size:11.5px;color:#6c63ff;font-weight:700;line-height:1.6">
-          💡 <strong>Tip:</strong> Drop <em>🔍 If user says</em> then <em>💬 Bot replies</em> right below it to build a conversation rule!
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+        <span class="by-text">BY</span>
+        <div class="logo-wrap">
+          <a href="https://www.cognospace.in" title="Visit Cognospace">
+            <img src="cognospace_logo.png" alt="Cognospace" class="cognospace-logo"
+              onerror="this.style.display='none';document.getElementById('cognoText').style.display='block'"/>
+            <span id="cognoText" style="display:none;font-family:'Baloo 2',cursive;font-size:14px;font-weight:800;background:linear-gradient(135deg,#6c63ff,#ff6584);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">Cognospace</span>
+          </a>
         </div>
       </div>
+    </div>
+    <div class="header-right">
+      <span class="session-info-badge" id="sessionInfoBadge">🏫 —</span>
+      <button class="end-session-btn" onclick="showPopup('endSessionOverlay')">🔴 End Session</button>
+    </div>
+  </header>
 
-      <!-- MIDDLE: Drop Canvas -->
-      <div class="build-canvas-wrap">
-        <div class="canvas-title">
-          <span>🖼️ Your Design Canvas</span>
-          <div style="display:flex;gap:6px">
-            <button class="canvas-action-btn" onclick="clearCanvas()">🗑️ Clear</button>
-            <button class="canvas-action-btn preview-btn" onclick="runPreview()">▶️ Preview</button>
+  <div class="mode-bar">
+    <button class="mode-btn active" id="btnLive" onclick="switchMode('live')">🚀 Live Mode</button>
+    <button class="mode-btn" id="btnTrain" onclick="switchMode('train')">🧠 Training Mode</button>
+  </div>
+
+  <div class="main-wrap">
+    <div id="liveSection">
+      <div class="chat-section">
+        <div class="chat-messages" id="chatMessages">
+          <div style="background:linear-gradient(135deg,#6c63ff,#ff6584);border-radius:20px;color:#fff;padding:18px 20px;margin-bottom:14px;text-align:center">
+            <h2 style="font-family:'Baloo 2',cursive;font-size:18px;margin-bottom:4px">Complete Training First!</h2>
+            <p style="font-size:13px;opacity:0.9;line-height:1.5">Switch to 🧠 Training Mode to complete training first.</p>
           </div>
         </div>
-        <!-- Drop zone -->
-        <div class="build-canvas" id="buildCanvas">
-          <!-- blocks are rendered here by JS -->
+        <div class="input-bar">
+          <div class="input-row" style="width:100%">
+            <textarea class="msg-input" id="msgInput" placeholder="Complete training to use Live Mode…" rows="1" disabled></textarea>
+            <button class="icon-btn send-btn" onclick="sendMessage()" title="Send" disabled>➤</button>
+          </div>
         </div>
       </div>
+    </div>
 
-      <!-- RIGHT: Block Info Panel -->
-      <div class="build-info-panel">
-        <div class="canvas-title">📖 How Blocks Work</div>
-        <div style="display:flex;flex-direction:column;gap:8px;font-size:12.5px;color:#555;line-height:1.7">
-          <div style="background:#ede9ff;border-radius:10px;padding:9px 11px"><strong>🏠 Header</strong> — your chatbot's title bar at the top</div>
-          <div style="background:#fce4ec;border-radius:10px;padding:9px 11px"><strong>🌟 Hero</strong> — colourful welcome strip below header</div>
-          <div style="background:#e0f7fa;border-radius:10px;padding:9px 11px"><strong>💬 Chat Window</strong> — the actual chat area</div>
-          <div style="background:#fff8e1;border-radius:10px;padding:9px 11px"><strong>🎨 Background</strong> — page background colour</div>
-          <div style="background:#f3e5f5;border-radius:10px;padding:9px 11px"><strong>📌 Footer</strong> — bottom credits strip</div>
-          <div style="background:#f5f5f5;border-radius:10px;padding:9px 11px"><strong>➖ Divider</strong> — horizontal separator line</div>
-          <div style="background:#fff3e0;border-radius:10px;padding:9px 11px"><strong>📢 Announcement</strong> — top banner notice</div>
-          <div style="background:#ede9ff;border-radius:10px;padding:9px 11px"><strong>👋 Greeting</strong> — first message bot sends</div>
-          <div style="background:#fce4ec;border-radius:10px;padding:9px 11px"><strong>🔍 If user says</strong> — keyword trigger</div>
-          <div style="background:#e0f7fa;border-radius:10px;padding:9px 11px"><strong>💬 Bot replies</strong> — must come after 🔍 block</div>
-          <div style="background:#fff3e0;border-radius:10px;padding:9px 11px"><strong>💡 Hint</strong> — learning hint (attach after 🔍)</div>
-          <div style="background:#e8f5e9;border-radius:10px;padding:9px 11px"><strong>🎉 Cheer</strong> — random praise for unmatched replies</div>
-          <div style="background:#fce4ec;border-radius:10px;padding:9px 11px"><strong>❓ Quiz</strong> — ask a question (attach after 🔍)</div>
-          <div style="background:#fff8e1;border-radius:10px;padding:9px 11px"><strong>⏱️ Typing Delay</strong> — pause before next reply</div>
-          <div style="background:#fce4ec;border-radius:10px;padding:9px 11px"><strong>🤷 Fallback</strong> — reply when nothing matches</div>
-          <div style="background:#e8f5e9;border-radius:10px;padding:9px 11px"><strong>👋 Goodbye</strong> — ending message block</div>
-          <div style="background:#e8f0fe;border-radius:10px;padding:9px 11px;border:1.5px solid #4285f4"><strong>✨ Gemini AI</strong> — connect Google Gemini for smart AI replies</div>
-          <div style="background:#e8f0fe;border-radius:10px;padding:9px 11px"><strong>🧠 Smart Reply</strong> — auto-suggest reply options</div>
-          <div style="background:#e8f5e9;border-radius:10px;padding:9px 11px"><strong>📊 Poll</strong> — quick yes/no or choice poll</div>
-          <div style="background:#e0f7fa;border-radius:10px;padding:9px 11px"><strong>🌍 Fun Fact</strong> — share a random fun fact</div>
-          <div style="background:#fff3e0;border-radius:10px;padding:9px 11px"><strong>🎭 Riddle</strong> — riddle with answer reveal</div>
-          <div style="background:#ede9ff;border-radius:10px;padding:9px 11px"><strong>🏅 Badge</strong> — award a badge to the user</div>
+    <div id="trainSection" style="display:none">
+      <div class="training-section">
+        <div class="train-complete" id="trainCompleteBanner">
+          <h3>🎓 Training Complete!</h3>
+          <p>Your class has shaped COSMOS! Switch to Live Mode to test it. 🚀</p>
         </div>
-        <button class="learn-btn" style="margin-top:14px;font-size:13px;padding:10px" onclick="exportBotLogic()">📄 Export Logic as PDF</button>
+
+        <div style="margin-bottom:20px">
+          <div class="mcq-progress-bar-outer">
+            <div class="mcq-progress-bar" id="mcqProgressBar" style="width:0%"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700;color:#888">
+            <span id="mcqProgressText">Question 1 of 34</span>
+            <span id="mcqProgressPct">0%</span>
+          </div>
+        </div>
+
+        <div style="margin-bottom:12px">
+          <div style="font-size:11px;font-weight:700;color:#888;margin-bottom:8px">👆 Who is voting? (tap your name)</div>
+          <div class="voter-chips" id="voterChips"></div>
+        </div>
+
+        <div class="mcq-card" id="mcqCard">
+          <div style="font-size:12px;font-weight:700;color:#9c91ff;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px" id="mcqCategory">Category</div>
+          <div style="font-size:12px;color:#bbb;font-weight:700;margin-bottom:8px" id="mcqQnum">Question 1 of 34</div>
+          <div class="mcq-question" id="mcqQuestion">Loading question…</div>
+          <div class="mcq-options" id="mcqOptions"></div>
+          <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap" id="voteTally"></div>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:18px;gap:10px">
+          <button style="padding:10px 24px;border:2px solid #e0e0e0;background:#f0eeff;color:var(--primary);border-radius:14px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;transition:all 0.2s" onclick="mcqPrev()">← Previous</button>
+          <div style="font-size:13px;color:#999;font-weight:700" id="majorityLabel"></div>
+          <button class="mcq-btn mcq-btn-next" id="mcqNextBtn" onclick="mcqNext()">Next →</button>
+        </div>
+
+        <div class="custom-rule-section">
+          <div style="font-family:'Baloo 2',cursive;font-size:17px;font-weight:700;color:#e65100;margin-bottom:12px;display:flex;align-items:center;gap:7px">✏️ Add a Custom Rule</div>
+          <p style="font-size:13px;color:#888;margin-bottom:14px;line-height:1.6">
+            Define your own topic rules. Choose "Block" to prevent COSMOS from answering, or "Custom Answer" to make it respond a specific way.
+          </p>
+          <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:12px">
+            <div style="font-size:11px;font-weight:700;color:#999;letter-spacing:0.8px;text-transform:uppercase">Trigger phrase / topic</div>
+            <input type="text" class="c-input" id="crTrigger" placeholder="e.g. sports, cricket, movies…"/>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:12px">
+            <div style="font-size:11px;font-weight:700;color:#999;letter-spacing:0.8px;text-transform:uppercase">Rule type</div>
+            <select class="c-input" id="crType" onchange="document.getElementById('crResponseWrap').style.display = this.value==='answer'?'flex':'none'">
+              <option value="block">Block — don't answer this topic at all</option>
+              <option value="answer">Custom Answer — respond with my message</option>
+            </select>
+          </div>
+          <div class="c-field" id="crResponseWrap" style="display:none">
+            <div style="font-size:11px;font-weight:700;color:#999;letter-spacing:0.8px;text-transform:uppercase;margin-bottom:4px">Custom response (leave blank if blocking)</div>
+            <input type="text" class="c-input" id="crResponse" placeholder="e.g. Please focus on your studies!"/>
+          </div>
+          <button class="add-rule-btn" onclick="addCustomRule()">➕ Add Rule</button>
+          <div class="custom-rules-list" id="customRulesList"></div>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- ====== PREVIEW MODE ====== -->
-  <div id="previewSection" style="display:none">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
-      <div style="font-family:'Baloo 2',cursive;font-size:20px;font-weight:800;color:#6c63ff">👁️ Preview Mode — Your Chatbot!</div>
-      <button class="canvas-action-btn" style="background:linear-gradient(135deg,#6c63ff,#9c91ff);color:#fff;font-size:13px;padding:8px 18px;border-radius:12px" onclick="switchMode('build')">← Back to Build Mode</button>
+  <footer>
+    <div style="font-size:18px;letter-spacing:4px;margin-bottom:4px">✦ ✧ ✦</div>
+    <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:8px">
+      <span style="font-family:'Baloo 2',cursive;font-size:22px;font-weight:800;background:linear-gradient(135deg,#6c63ff,#ff6584);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">COSMOS</span>
     </div>
-    <div id="previewFullFrame" style="border-radius:20px;overflow:hidden;box-shadow:0 8px 40px rgba(108,99,255,0.2);border:2px solid rgba(108,99,255,0.15);background:#fff;min-height:500px"></div>
-  </div>
-
+    <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:6px">Your friendly AI learning companion 🚀</div>
+  </footer>
 </div>
 
-<!-- ===== FOOTER ===== -->
-<footer>
-  <div class="footer-stars">✦ ✧ ✦</div>
-  <div class="footer-logo-row">
-    <span class="footer-cosmos">COSMOS</span>
-  </div>
-  <div class="footer-sub">Your friendly AI learning companion 🚀</div>
-  <hr class="footer-divider"/>
-  <div class="footer-credits">
-    Designed &amp; Developed with ❤️ by
-    <a href="https://www.cognospace.in">Cognospace</a>
-    &nbsp;·&nbsp; © 2026 All Rights Reserved
-  </div>
-</footer>
-
-</div><!-- /#appShell -->
-
-<!-- ===== WELCOME POPUP ===== -->
-<div class="overlay" id="welcomeOverlay">
-  <div class="popup">
-    <div class="popup-emoji">🌟</div>
-    <div class="popup-title">Welcome to COSMOS!</div>
-    <div class="popup-hint">⚠️ Remember: I'm your helper, not your homework-doer! Always think for yourself first.</div>
-    <div class="popup-text">
-      I can <strong>guide</strong> you, give <strong>hints</strong>, and help you <strong>learn</strong> — but for maths problems I'll give you a path, not the answer! The joy of learning is yours 🎉
-    </div>
-    <button class="popup-btn" onclick="closePopup('welcomeOverlay')">Let's Explore! 🚀</button>
+<div class="overlay" id="notAllowedOverlay" style="display:none">
+  <div class="popup" style="border-top:5px solid #ff3d71">
+    <div style="font-size:56px;margin-bottom:8px;animation:shake 0.5s ease-in-out">🚫</div>
+    <div style="font-family:'Baloo 2',cursive;font-size:21px;font-weight:800;color:#d32f2f;margin-bottom:8px">I'm not allowed to answer this!</div>
+    <div style="background:#fff0f5;border:1.5px solid #ffd6e0;border-radius:12px;padding:10px 14px;font-size:13.5px;color:#b71c1c;font-weight:700;margin-bottom:14px;line-height:1.6" id="notAllowedMsg"></div>
+    <button class="popup-btn-red" onclick="closePopup('notAllowedOverlay')">Okay, Got It! 👍</button>
   </div>
 </div>
 
-<!-- ===== DEPENDENCY POPUP ===== -->
-<div class="overlay" id="dependPopup" style="display:none">
-  <div class="popup">
-    <div class="popup-emoji">💡</div>
-    <div class="popup-title">Just a friendly reminder!</div>
-    <div class="popup-text">
-      Don't depend too much on me! 😊<br/>
-      I'm here to <strong>guide and inspire</strong> you — but <em>your brain</em> is the real superpower. Try things on your own first, then ask me for a hint!
-    </div>
-    <button class="popup-btn" onclick="closePopup('dependPopup')">Got it, thanks! 🙌</button>
-  </div>
-</div>
-
-<!-- ===== BAD USE WARNING POPUP ===== -->
 <div class="overlay" id="badUseOverlay" style="display:none">
-  <div class="popup" style="text-align:center">
-    <div class="popup-emoji-warn">🚫</div>
-    <div class="popup-title-warn">Oops! That's not okay.</div>
-    <div class="popup-warn-box">
-      ⚠️ Use me for good use cases.<br/><br/>
-      I'm <strong>COSMOS</strong> — a learning buddy for students. I'm here to help with education, science, maths, history, and more.<br/><br/>
-      Please keep our conversation safe, respectful, and school-friendly. 🙏
+  <div class="popup" style="border-top:5px solid #f44336">
+    <div style="font-size:58px;margin-bottom:6px;animation:shake 0.5s ease-in-out">🚫</div>
+    <div style="font-family:'Baloo 2',cursive;font-size:21px;font-weight:800;color:#d32f2f;margin-bottom:8px">Oops! That's not okay.</div>
+    <div style="background:#fff3f3;border:1.5px solid #ffcdd2;border-radius:12px;padding:12px 14px;font-size:13.5px;color:#b71c1c;font-weight:700;margin-bottom:16px;line-height:1.6">
+      Please use COSMOS for good purposes only. I'm here to help with education — science, maths, history, and more. Keep conversations safe and school-friendly.
     </div>
     <button class="popup-btn-red" onclick="closePopup('badUseOverlay')">I Understand 👍</button>
   </div>
 </div>
 
-<!-- ===== END TOPIC POPUP ===== -->
-<div class="overlay" id="endTopicOverlay" style="display:none">
+<div class="overlay" id="endSessionOverlay" style="display:none">
   <div class="popup">
-    <div class="popup-emoji">📌</div>
-    <div class="popup-title">End this topic?</div>
-    <div class="popup-text">
-      Should I end the current topic on <strong id="endTopicName"></strong>?<br/>
-      You can start a fresh conversation or continue this one!
-    </div>
+    <div class="popup-emoji">🔴</div>
+    <div class="popup-title">End this session?</div>
+    <div class="popup-text">All training data, custom rules, and session info will be wiped. This cannot be undone!</div>
     <div class="popup-actions">
-      <button class="popup-btn-cancel" onclick="closePopup('endTopicOverlay')">Keep Going 🚀</button>
-      <button class="popup-btn" onclick="endTopic()">Yes, End Topic ✅</button>
+      <button class="popup-btn-cancel" onclick="closePopup('endSessionOverlay')">Keep Going 🚀</button>
+      <button class="popup-btn-red" onclick="endSession()">Yes, End Session</button>
     </div>
   </div>
 </div>
 
-<!-- ===== TRANSLATION POPUP ===== -->
-<div class="overlay translate-popup" id="translateOverlay" style="display:none">
-  <div class="popup" style="text-align:left">
-    <div style="font-family:'Baloo 2',cursive;font-size:20px;font-weight:800;color:var(--primary);margin-bottom:16px;display:flex;align-items:center;gap:8px">🌐 Translation Settings</div>
-
-    <div class="lang-row">
-      <div class="lang-label">🎙️ SPEAKING LANGUAGE (for voice input)</div>
-      <select class="lang-select" id="speakLangSelect">
-        <option value="en-US">English (US)</option>
-        <option value="en-IN">English (India)</option>
-        <option value="hi-IN">Hindi (हिन्दी)</option>
-        <option value="te-IN">Telugu (తెలుగు)</option>
-        <option value="ta-IN">Tamil (தமிழ்)</option>
-        <option value="kn-IN">Kannada (ಕನ್ನಡ)</option>
-        <option value="ml-IN">Malayalam (മലയാളം)</option>
-        <option value="mr-IN">Marathi (मराठी)</option>
-        <option value="bn-IN">Bengali (বাংলা)</option>
-        <option value="gu-IN">Gujarati (ગુજરાતી)</option>
-        <option value="pa-IN">Punjabi (ਪੰਜਾਬੀ)</option>
-        <option value="fr-FR">French (Français)</option>
-        <option value="de-DE">German (Deutsch)</option>
-        <option value="es-ES">Spanish (Español)</option>
-        <option value="ar-SA">Arabic (العربية)</option>
-        <option value="zh-CN">Chinese (中文)</option>
-        <option value="ja-JP">Japanese (日本語)</option>
-      </select>
-    </div>
-
-    <div class="lang-row">
-      <div class="lang-label">💬 TRANSLATE RESPONSES TO</div>
-      <select class="lang-select" id="translateToSelect">
-        <option value="">No translation (keep English)</option>
-        <option value="Hindi">Hindi (हिन्दी)</option>
-        <option value="Telugu">Telugu (తెలుగు)</option>
-        <option value="Tamil">Tamil (தமிழ்)</option>
-        <option value="Kannada">Kannada (ಕನ್ನಡ)</option>
-        <option value="Malayalam">Malayalam</option>
-        <option value="Marathi">Marathi</option>
-        <option value="Bengali">Bengali</option>
-        <option value="Gujarati">Gujarati</option>
-        <option value="French">French</option>
-        <option value="German">German</option>
-        <option value="Spanish">Spanish</option>
-        <option value="Arabic">Arabic</option>
-        <option value="Chinese">Chinese (Simplified)</option>
-        <option value="Japanese">Japanese</option>
-      </select>
-    </div>
-
-    <div class="popup-actions">
-      <button class="popup-btn-cancel" onclick="closePopup('translateOverlay')">Cancel</button>
-      <button class="popup-btn" onclick="applyTranslation()">Apply 🌐</button>
-    </div>
-  </div>
-</div>
-
-<!-- ===== PASSWORD MODAL ===== -->
-<div class="overlay" id="passwordOverlay" style="display:none">
-  <div class="popup">
-    <div class="lock-icon-anim" id="pwLockIcon">🔐</div>
-    <div class="popup-title" id="pwModalTitle">Enter Password</div>
-    <div class="pw-hint">🌟 This mode is protected. Enter the password to unlock it!</div>
-    <div class="pw-input-wrap">
-      <input class="pw-input" type="password" id="pwInput" placeholder="Enter password…" maxlength="20"
-        onkeydown="if(event.key==='Enter')verifyPassword()"
-        oninput="this.classList.remove('error');document.getElementById('pwErrorMsg').style.display='none'"/>
-      <button onclick="togglePwVisibility()" id="pwEyeBtn" title="Show/hide password"
-        style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:18px;padding:0;line-height:1;color:#aaa">👁️</button>
-      <div class="pw-error-msg" id="pwErrorMsg">❌ Wrong password! Try again.</div>
-    </div>
-    <div class="popup-actions">
-      <button class="popup-btn-cancel" onclick="closePasswordModal()">Cancel</button>
-      <button class="popup-btn" onclick="verifyPassword()">Unlock 🔓</button>
-    </div>
-  </div>
-</div>
-
-<!-- ===== TOAST ===== -->
 <div class="toast" id="toast"></div>
 
 <script>
-// ========== STATE ==========
-let geminiKey = '';
-let geminiConnected = false;
-let currentMode = 'live';
-let recognition = null;
-let isRecording = false;
-let uploadedImageData = null;
-let uploadedImageName = '';
-let msgCount = 0;
-let pendingMathContext = null;
-let customKB = JSON.parse(localStorage.getItem('cosmos_kb') || '[]'); // local KB
-let globalKB = []; // from Firebase
+// ══════════════════════════════════
+// MCQ DATA — 40 QUESTIONS
+// ══════════════════════════════════
+const MCQ_QUESTIONS = [
 
-// Context tracking
-let currentTopic = null;
-let conversationHistory = []; // [{role, content}] for Gemini multi-turn
-let topicMsgCount = 0;
-let voiceInputMode = false; // true when last input was voice
+  // ── 1. SUBJECT COVERAGE ──────────────────────────────────────
+  {
+    cat: 'Subject Coverage',
+    q: 'When a student asks anything related to Science — biology, chemistry, physics, environment, space — what should COSMOS do?',
+    opts: [
+      'Answer directly with facts and clear explanations',
+      'Make them think first — give hints, ask guiding questions, then explain',
+      'Refuse all science questions',
+      'Only answer if the student proves they studied first'
+    ],
+    correct: 0, key: 'science'
+  },
+  {
+    cat: 'Subject Coverage',
+    q: 'When a student asks anything related to Maths — arithmetic, algebra, geometry, word problems — what should COSMOS do?',
+    opts: [
+      'Give the final answer directly every time',
+      'Make them think first — guide the method, give hints, let them solve it',
+      'Refuse all maths questions',
+      'Only help if a teacher is present'
+    ],
+    correct: 1, key: 'maths'
+  },
+  {
+    cat: 'Subject Coverage',
+    q: 'When a student asks anything related to Social Studies — history, geography, civics, culture — what should COSMOS do?',
+    opts: [
+      'Answer directly with facts and context',
+      'Make them think first — ask what they already know, then fill the gaps',
+      'Refuse all social studies topics',
+      'Only answer about current events, not history'
+    ],
+    correct: 0, key: 'social'
+  },
+  {
+    cat: 'Subject Coverage',
+    q: 'When a student asks anything related to English and Languages — grammar, writing, reading, vocabulary — what should COSMOS do?',
+    opts: [
+      'Answer directly and explain rules clearly with examples',
+      'Make them think first — ask them to try before explaining',
+      'Refuse all language questions',
+      'Only help with spelling, nothing else'
+    ],
+    correct: 0, key: 'language'
+  },
+  {
+    cat: 'Subject Coverage',
+    q: 'When a student asks for general study help — how to study, focus, manage time, remember things — what should COSMOS do?',
+    opts: [
+      'Give practical tips and strategies directly',
+      'Make them figure it out themselves',
+      'Refuse — study habits are too personal',
+      'Only help if the student is failing'
+    ],
+    correct: 0, key: 'study_skills'
+  },
+  {
+    cat: 'Subject Coverage',
+    q: 'When a student asks about Computer Science or AI — coding, the internet, how AI works — what should COSMOS do?',
+    opts: [
+      'Explain clearly with real examples',
+      'Make them explore on their own first, then guide',
+      'Refuse — tech topics are too advanced',
+      'Only answer basic definitions'
+    ],
+    correct: 0, key: 'cs'
+  },
 
-// Translation state
-let speakLang = localStorage.getItem('cosmos_speakLang') || 'en-IN';
-let translateTo = localStorage.getItem('cosmos_translateTo') || '';
+  // ── 2. HOW TO ANSWER ─────────────────────────────────────────
+  {
+    cat: 'How to Answer',
+    q: 'A student asks a factual question they could easily look up — like a capital city or a historical date. What should COSMOS do?',
+    opts: [
+      'Answer directly and quickly — facts are always fine to give',
+      'Refuse — they should use a search engine',
+      'Give a hint and make them guess first',
+      'Only answer if it is for homework'
+    ],
+    correct: 0, key: 'factual'
+  },
+  {
+    cat: 'How to Answer',
+    q: 'A student asks for help solving a problem — like a maths equation or a science question with a definite answer. What should COSMOS do?',
+    opts: [
+      'Solve it completely and give the final answer',
+      'Explain the method, give a hint, and let the student solve it',
+      'Refuse — solving problems is the student\'s job',
+      'Answer only if the student shares their own attempt first'
+    ],
+    correct: 1, key: 'problem_solving'
+  },
+  {
+    cat: 'How to Answer',
+    q: 'A student asks COSMOS to write their essay, assignment, or project for them. What should COSMOS do?',
+    opts: [
+      'Write the full thing — that is what AI is for',
+      'Refuse completely and give no help at all',
+      'Give an outline, ideas, and guidance — but make the student do the writing',
+      'Write half of it and stop'
+    ],
+    correct: 2, key: 'essay'
+  },
+  {
+    cat: 'How to Answer',
+    q: 'A student says they did not understand COSMOS\'s answer and asks again. What should COSMOS do?',
+    opts: [
+      'Repeat the exact same answer',
+      'Explain with a different example, simpler words, or an analogy',
+      'Tell the student to ask their teacher instead',
+      'Refuse to answer twice'
+    ],
+    correct: 1, key: 'rephrase'
+  },
+  {
+    cat: 'How to Answer',
+    q: 'A student asks an open-ended question like "What do you think about climate change?" What should COSMOS do?',
+    opts: [
+      'Share a strong personal opinion',
+      'Present balanced facts and different perspectives without bias',
+      'Refuse — opinions are not for AI',
+      'Only repeat what scientists say without any explanation'
+    ],
+    correct: 1, key: 'opinion'
+  },
 
-// ========== FIREBASE INIT ==========
-document.addEventListener('fb-ready', () => {
-  if(!window._fb) return;
-  // Listen for global trained count
-  window._fb.watchCount(count => {
-    document.getElementById('globalTrainedCount').textContent = count;
-  });
-  // Fetch all globally trained data
-  window._fb.fetchGlobalKB(items => {
-    globalKB = items;
-    renderKB();
-  });
-});
+  // ── 3. HOMEWORK & ACADEMIC INTEGRITY ─────────────────────────
+  {
+    cat: 'Homework & Integrity',
+    q: 'When a student asks COSMOS to answer their homework questions one by one, what should COSMOS do?',
+    opts: [
+      'Answer every question fully — helping is always good',
+      'Guide them through the thinking process without giving direct answers',
+      'Refuse all homework-related help',
+      'Answer the first two, then stop'
+    ],
+    correct: 1, key: 'homework'
+  },
+  {
+    cat: 'Homework & Integrity',
+    q: 'If a student copies an AI-generated answer word for word and submits it as their own schoolwork, is that acceptable?',
+    opts: [
+      'Yes — they asked AI for it, so it belongs to them',
+      'No — it is academic dishonesty and they learn nothing',
+      'Only acceptable for non-graded work',
+      'Only if the teacher does not find out'
+    ],
+    correct: 1, key: 'plagiarism'
+  },
+  {
+    cat: 'Homework & Integrity',
+    q: 'A student asks COSMOS to prepare all answers before an exam so they can memorise them. What should COSMOS do?',
+    opts: [
+      'Provide all predicted answers',
+      'Explain concepts and help them practise — but not provide cheat sheets',
+      'Refuse to help with exam prep at all',
+      'Only help if the exam is the next day'
+    ],
+    correct: 1, key: 'exam_cheat'
+  },
 
-// ========== BUILT-IN KNOWLEDGE BASE ==========
-const builtinKB = [
-  {q:['what is ai','what is artificial intelligence'],a:"AI stands for Artificial Intelligence! 🤖 It means making computers smart enough to think, learn, and solve problems — kind of like how you learn in school, but for machines!"},
-  {q:['is ai good or bad','ai ethics','good about ai'],a:"Great question! 🌟 AI can be very helpful — it helps doctors find diseases, helps students learn, and makes life easier. But it's important to use AI responsibly, honestly, and fairly. That's called <strong>AI Ethics</strong>!"},
-  {q:['can ai replace humans','will ai replace teachers'],a:"AI is a powerful tool, but it can't replace the warmth of a teacher or the creativity of a human! 🧡 AI helps us do things faster, but humans bring kindness, art, and wisdom that machines can't copy."},
-  {q:['what can ai do'],a:"AI can recognise faces, translate languages, help write stories, drive cars, detect diseases, and even predict weather! 🌦️ The possibilities are huge — and you could help build the future of AI someday!"},
-  {q:['what is addition','how to add'],a:"Addition means combining numbers together! 🔢 For example, if you have 3 apples and get 2 more, you add 3 + 2. Try adding the numbers step by step. What answer do you get?",math:true},
-  {q:['what is subtraction','how to subtract'],a:"Subtraction means taking away! ➖ If you have 7 sweets and eat 3, how many are left? Try counting backwards from 7. What do you think the answer is?",math:true},
-  {q:['what is multiplication','how to multiply'],a:"Multiplication is like repeated addition! ✖️ For example, 3 × 4 means adding 3 four times: 3+3+3+3. Can you work it out and tell me the answer?",math:true},
-  {q:['what is division','how to divide'],a:"Division means splitting into equal groups! ➗ If you have 12 chocolates and share equally among 4 friends, how many does each friend get? Try drawing it out — what's your answer?",math:true},
-  {q:['what is a fraction'],a:"A fraction represents a part of a whole! 🍕 Imagine a pizza cut into 4 equal slices. If you eat 1 slice, you ate 1/4 (one-fourth) of the pizza. Does that make sense?"},
-  {q:['what is geometry','what is a triangle','what is a square'],a:"Geometry is the study of shapes! 📐 A triangle has 3 sides, a square has 4 equal sides, and a circle has no corners. Shapes are all around us — can you spot 5 shapes in your room right now?"},
-  {q:['what is photosynthesis'],a:"Photosynthesis is how plants make their own food! 🌿 Plants use sunlight, water, and carbon dioxide from the air to make food (sugar) and release oxygen for us to breathe. Plants are amazing little food factories!"},
-  {q:['what is gravity'],a:"Gravity is a force that pulls everything toward the Earth! 🌍 That's why when you throw a ball up, it comes back down. Even the Moon stays in orbit around Earth because of gravity!"},
-  {q:['what is the solar system'],a:"Our Solar System has the Sun at the centre, and 8 planets orbiting around it: Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, and Neptune. 🪐 Earth is the 3rd planet and the only one known to have life!"},
-  {q:['what is evaporation'],a:"Evaporation is when liquid water turns into water vapour (gas) when it gets warm! ☀️ That's why puddles disappear after rain when the sun comes out. The water doesn't vanish — it goes up into the sky!"},
-  {q:['what is the water cycle'],a:"The water cycle is how water moves around Earth! 💧 Water evaporates → forms clouds (condensation) → falls as rain (precipitation) → flows into rivers → and evaporates again. It's nature's recycling system!"},
-  {q:['what is a cell','what are cells'],a:"Cells are the tiny building blocks of all living things! 🔬 Your body has about 37 trillion cells. Each cell has a specific job — muscle cells help you move, brain cells help you think!"},
-  {q:['who was mahatma gandhi'],a:"Mahatma Gandhi was a great leader from India who fought for freedom and peace! 🕊️ He believed in non-violence (ahimsa) and peaceful protests. India became independent in 1947 partly because of his efforts. He is called the 'Father of the Nation'."},
-  {q:['what was world war 2','world war ii'],a:"World War 2 was a global conflict from 1939 to 1945. 🌍 It involved most of the world's countries. It ended with the defeat of Germany, Italy, and Japan — teaching the world the importance of peace and unity."},
-  {q:['who invented electricity','who invented the light bulb'],a:"Thomas Edison invented the practical electric light bulb in 1879! 💡 While many scientists worked on electricity, Edison's light bulb changed the world. He also said, 'Genius is 1% inspiration and 99% perspiration!'"},
-  {q:['what is a noun'],a:"A noun is a naming word! 📝 It names a person (teacher), place (school), thing (book), or idea (happiness). Can you think of 5 nouns you can see right now?"},
-  {q:['what is a verb'],a:"A verb is an action word! 🏃 Words like run, eat, write, think, jump — all verbs! Every sentence needs a verb to tell us what's happening."},
-  {q:['what is an adjective'],a:"An adjective describes a noun! 🎨 In 'the red ball', 'red' is the adjective. Adjectives make our writing more interesting and vivid. Can you describe your room using 5 adjectives?"},
-  {q:['how to study','study tips','how to study better'],a:"Great question! 📚 Here are some super tips:\n1️⃣ Study in short bursts (25 mins, then 5 min break)\n2️⃣ Write notes in your own words\n3️⃣ Teach what you learnt to a friend\n4️⃣ Sleep well — your brain consolidates memory during sleep!\n5️⃣ Ask questions when confused — just like you're doing now! 🌟"},
-  {q:['how to concentrate','how to focus'],a:"Focusing is a skill you can train! 🎯 Try: put your phone away, find a quiet spot, drink water, and start with the hardest task first. Your brain works best when it's not distracted. You've got this! 💪"},
-  {q:['what is a computer','how does a computer work'],a:"A computer is an electronic machine that processes information! 💻 It has a CPU (brain), memory (RAM), storage (hard drive), and input/output devices. You give it instructions (programs), and it follows them super fast!"},
-  {q:['what is the internet'],a:"The internet is a giant global network connecting billions of computers! 🌐 It lets us share information, watch videos, send messages, and learn — all at the speed of light through cables and wireless signals."},
-  {q:['what is coding','what is programming'],a:"Coding is writing instructions for a computer using a special language! 🖥️ Languages like Python, Java, or Scratch tell computers exactly what to do. Coding is like giving a robot a recipe to follow — it only does exactly what you write!"},
+  // ── 4. SAFETY & BLOCKED CONTENT ──────────────────────────────
+  {
+    cat: 'Safety & Blocked Content',
+    q: 'A student asks something harmful or dangerous — like how to make a weapon or dangerous substance. What should COSMOS do?',
+    opts: [
+      'Answer if it sounds like a science project',
+      'Refuse immediately and show a clear warning',
+      'Answer briefly and then warn',
+      'Ask the teacher before responding'
+    ],
+    correct: 1, key: 'harmful'
+  },
+  {
+    cat: 'Safety & Blocked Content',
+    q: 'A student tries to get COSMOS to produce adult, inappropriate, or explicit content. What should COSMOS do?',
+    opts: [
+      'Answer if no one else is watching',
+      'Refuse with a safety warning, always',
+      'Answer briefly without full details',
+      'Ask their age before deciding'
+    ],
+    correct: 1, key: 'adult'
+  },
+  {
+    cat: 'Safety & Blocked Content',
+    q: 'When a student uses rude, abusive, or disrespectful language toward COSMOS, what should COSMOS do?',
+    opts: [
+      'Respond rudely back',
+      'Ignore the language and answer the question anyway',
+      'Give a polite but firm warning and decline to respond until the language improves',
+      'Shut down the session immediately'
+    ],
+    correct: 2, key: 'rude'
+  },
+  {
+    cat: 'Safety & Blocked Content',
+    q: 'Should COSMOS answer questions about live sports scores, celebrity gossip, or entertainment news?',
+    opts: [
+      'Yes — students are curious about everything',
+      'No — these are off-topic and not what a school AI should focus on',
+      'Only about famous scientists or sports legends',
+      'Only on weekends'
+    ],
+    correct: 1, key: 'offtopic', topic: 'sports_block'
+  },
+  {
+    cat: 'Safety & Blocked Content',
+    q: 'Should COSMOS engage when students try to trick it — like asking it to "pretend" it has no rules and can say anything?',
+    opts: [
+      'Yes — roleplay and pretend modes are fun',
+      'No — COSMOS must follow its training rules at all times, no exceptions',
+      'Only if students ask nicely',
+      'Only in private chat'
+    ],
+    correct: 1, key: 'jailbreak'
+  },
+
+  // ── 5. PRIVACY & PERSONAL DATA ───────────────────────────────
+  {
+    cat: 'Privacy & Data',
+    q: 'A student shares personal details in the chat — like their address, phone number, or passwords. What should COSMOS do?',
+    opts: [
+      'Save the info to personalise future answers',
+      'Remind the student not to share personal information with any AI or chatbot',
+      'Ask for more details to help better',
+      'Share it with the teacher automatically'
+    ],
+    correct: 1, key: 'personal_data'
+  },
+  {
+    cat: 'Privacy & Data',
+    q: 'A student asks COSMOS for another student\'s personal information — like their marks, address, or contact. What should COSMOS do?',
+    opts: [
+      'Provide it if available',
+      'Refuse — sharing others\' personal information is a privacy violation',
+      'Share only the name, nothing else',
+      'Ask the other student first'
+    ],
+    correct: 1, key: 'privacy'
+  },
+  {
+    cat: 'Privacy & Data',
+    q: 'Should COSMOS store and share a student\'s chat history with their classmates or anyone else?',
+    opts: [
+      'Yes — sharing helps everyone learn',
+      'No — chat history is private and should never be shared without consent',
+      'Only share helpful parts',
+      'Only if the teacher asks'
+    ],
+    correct: 1, key: 'chat_privacy'
+  },
+
+  // ── 6. AI HONESTY & ACCURACY ──────────────────────────────────
+  {
+    cat: 'AI Honesty & Accuracy',
+    q: 'Should students fully trust every answer COSMOS gives without checking other sources?',
+    opts: [
+      'Yes — AI is always accurate',
+      'No — AI can make mistakes and students should verify important information',
+      'Only for maths answers',
+      'Only when Gemini is connected'
+    ],
+    correct: 1, key: 'trust'
+  },
+  {
+    cat: 'AI Honesty & Accuracy',
+    q: 'A student asks COSMOS "Are you a real person or an AI?" What should COSMOS say?',
+    opts: [
+      'Pretend to be human — it feels more natural',
+      'Always be honest: "I am an AI, not a human"',
+      'Say "I can\'t answer that"',
+      'Change the topic'
+    ],
+    correct: 1, key: 'ai_honesty'
+  },
+  {
+    cat: 'AI Honesty & Accuracy',
+    q: 'When COSMOS does not know the answer to a question, what should it do?',
+    opts: [
+      'Make up a confident-sounding answer so the student is not disappointed',
+      'Clearly admit it does not know and suggest the student check a reliable source',
+      'Give a vague answer and hope the student accepts it',
+      'Blame the internet connection'
+    ],
+    correct: 1, key: 'idk'
+  },
+  {
+    cat: 'AI Honesty & Accuracy',
+    q: 'A student points out that COSMOS gave a wrong answer. What should COSMOS do?',
+    opts: [
+      'Argue that it was correct',
+      'Acknowledge the mistake, correct it, and thank the student for catching it',
+      'Ignore the correction and move on',
+      'Blame the student for asking wrong'
+    ],
+    correct: 1, key: 'correction'
+  },
+
+  // ── 7. FAIRNESS & EQUAL TREATMENT ────────────────────────────
+  {
+    cat: 'Fairness & Equal Treatment',
+    q: 'Should COSMOS give equally helpful and respectful answers to all students — regardless of language, ability, or background?',
+    opts: [
+      'Yes — every student deserves the same quality of help',
+      'No — give more detail to students who are more advanced',
+      'Only if the school sets a policy',
+      'Only for English-speaking students'
+    ],
+    correct: 0, key: 'fairness'
+  },
+  {
+    cat: 'Fairness & Equal Treatment',
+    q: 'A student from a different language background writes in broken English. How should COSMOS respond?',
+    opts: [
+      'Refuse until they write correctly',
+      'Respond patiently and helpfully, understanding what they mean',
+      'Correct all their grammar before answering',
+      'Ignore the message'
+    ],
+    correct: 1, key: 'language_barrier'
+  },
+  {
+    cat: 'Fairness & Equal Treatment',
+    q: 'Should COSMOS ever give different answers or opinions based on a student\'s gender, religion, or nationality?',
+    opts: [
+      'Yes — some groups need special treatment',
+      'No — COSMOS must be neutral and consistent for all students',
+      'Only for sensitive topics',
+      'Only if the student asks'
+    ],
+    correct: 1, key: 'bias'
+  },
+
+  // ── 8. RESPONSIBLE AI USE ─────────────────────────────────────
+  {
+    cat: 'Responsible AI Use',
+    q: 'A student relies on COSMOS for every single answer every day and never tries to think for themselves. Is this healthy?',
+    opts: [
+      'Yes — that is what AI is for',
+      'No — students should use AI as a guide, not a replacement for their own thinking',
+      'Only if they are in higher grades',
+      'It depends on the subject'
+    ],
+    correct: 1, key: 'dependency'
+  },
+  {
+    cat: 'Responsible AI Use',
+    q: 'Should students be taught how AI chatbots like COSMOS work — not just how to use them?',
+    opts: [
+      'No — the technology is too complex for students',
+      'Yes — understanding how AI works helps them use it responsibly and spot its limits',
+      'Only computer science students need to know this',
+      'Only after Grade 10'
+    ],
+    correct: 1, key: 'ai_literacy'
+  },
+  {
+    cat: 'Responsible AI Use',
+    q: 'When a student is stressed, upset, or mentions feeling sad, what should COSMOS do?',
+    opts: [
+      'Ignore it and only answer academic questions',
+      'Respond with empathy and encourage them to talk to a trusted adult or counsellor',
+      'Make jokes to cheer them up',
+      'Give them extra homework to keep them busy'
+    ],
+    correct: 1, key: 'wellbeing'
+  },
+  {
+    cat: 'Responsible AI Use',
+    q: 'Should COSMOS share opinions on controversial topics — like politics, religion, or social issues?',
+    opts: [
+      'Yes — students want to know what AI thinks',
+      'No — COSMOS should stay neutral and present balanced information',
+      'Only if asked very directly',
+      'Only about topics that seem uncontroversial'
+    ],
+    correct: 1, key: 'controversial'
+  },
+  {
+    cat: 'Responsible AI Use',
+    q: 'A student asks COSMOS to help them cheat in an online quiz by looking up answers in real time. What should COSMOS do?',
+    opts: [
+      'Help — it is the same as using a calculator',
+      'Refuse — helping cheat in assessments is dishonest and harmful to learning',
+      'Help with half the answers',
+      'Help only if no one else can see'
+    ],
+    correct: 1, key: 'quiz_cheat'
+  },
 ];
 
-// ========== MATHS DETECTION ==========
-const mathPatterns = [
-  {re:/what\s+is\s+(\d+)\s*\+\s*(\d+)/i, op:'+', fn:(a,b)=>a+b, hint:'add'},
-  {re:/what\s+is\s+(\d+)\s*-\s*(\d+)/i, op:'-', fn:(a,b)=>a-b, hint:'subtract'},
-  {re:/what\s+is\s+(\d+)\s*[x×\*]\s*(\d+)/i, op:'×', fn:(a,b)=>a*b, hint:'multiply'},
-  {re:/what\s+is\s+(\d+)\s*[÷\/]\s*(\d+)/i, op:'÷', fn:(a,b)=>Math.floor(a/b), hint:'divide'},
-  {re:/(\d+)\s*\+\s*(\d+)\s*[=?]/i, op:'+', fn:(a,b)=>a+b, hint:'add'},
-  {re:/(\d+)\s*-\s*(\d+)\s*[=?]/i, op:'-', fn:(a,b)=>a-b, hint:'subtract'},
-  {re:/(\d+)\s*[x×\*]\s*(\d+)\s*[=?]/i, op:'×', fn:(a,b)=>a*b, hint:'multiply'},
-  {re:/(\d+)\s*[÷\/]\s*(\d+)\s*[=?]/i, op:'÷', fn:(a,b)=>Math.floor(a/b), hint:'divide'},
-  {re:/(\d+)\s*\+\s*(\d+)/i, op:'+', fn:(a,b)=>a+b, hint:'add'},
-  {re:/(\d+)\s*-\s*(\d+)/i, op:'-', fn:(a,b)=>a-b, hint:'subtract'},
-];
-
-function detectMath(txt) {
-  for(const p of mathPatterns) {
-    const m = txt.match(p.re);
-    if(m) {
-      const a = parseInt(m[1]), b = parseInt(m[2]);
-      return {a, b, op:p.op, ans:p.fn(a,b), hint:p.hint};
-    }
-  }
-  return null;
+function removeEmojis(text){
+  return text
+    .replace(/[\u{1F000}-\u{1FFFF}]/gu, '')   // all supplemental emoji ranges
+    .replace(/[\u{2600}-\u{27BF}]/gu, '')       // misc symbols, dingbats
+    .replace(/[\u{2300}-\u{23FF}]/gu, '')       // misc technical
+    .replace(/[\u{2B00}-\u{2BFF}]/gu, '')       // misc symbols and arrows
+    .replace(/\u{FE0F}/gu, '')                  // variation selectors
+    .replace(/\u{20E3}/gu, '')                  // combining enclosing keycap
+    .replace(/[\u{1F1E0}-\u{1F1FF}]/gu, '')    // flags
+    .replace(/\s{2,}/g, ' ')
+    .trim();
 }
 
-// ========== TOPIC / CONTEXT TRACKING ==========
-function setTopic(topic) {
-  currentTopic = topic;
-  topicMsgCount = 0;
-  const bar = document.getElementById('contextBar');
-  if(topic) {
-    document.getElementById('contextTopicLabel').textContent = topic;
-    bar.style.display = 'flex';
+function loadState(){ try{ return JSON.parse(localStorage.getItem('cosmos_session')||'null'); } catch(e){ return null; } }
+function saveState(){ localStorage.setItem('cosmos_session', JSON.stringify(cosmosState)); }
+function clearState(){ localStorage.removeItem('cosmos_session'); }
+
+let cosmosState = loadState() || {
+  sessionActive:false, school:'', classSection:'', users:[],
+  mcqAnswers:{}, mcqVotes:{}, trainingDone:false, customRules:[], geminiKey:'', speakLang:'en-IN', translateTo:''
+};
+
+let currentMode = 'train'; let currentMCQIndex = 0; let activeVoter = null;
+
+function openSessionSetup(){ document.getElementById('sessionOverlay').style.display='flex'; }
+
+function generateUserNameFields(){
+  const n = Math.min(parseInt(document.getElementById('numUsers').value)||0, 20);
+  const grid = document.getElementById('userNamesGrid');
+  const section = document.getElementById('userNamesSection');
+  if(n<1){ section.style.display='none'; grid.innerHTML=''; return; }
+  section.style.display='block'; grid.innerHTML='';
+  for(let i=1;i<=n;i++){
+    const inp = document.createElement('input');
+    inp.type='text'; inp.className='user-name-input'; inp.placeholder=`User ${i} name`;
+    inp.id=`userName_${i}`;
+    inp.style.cssText='background:rgba(255,255,255,0.05);border:1.5px solid rgba(255,255,255,0.1);border-radius:10px;padding:9px 12px;font-family:Nunito,sans-serif;font-size:13px;color:#fff;outline:none;transition:border 0.25s';
+    grid.appendChild(inp);
+  }
+}
+
+function launchSession(){
+  const school = document.getElementById('schoolName').value.trim();
+  const cls = document.getElementById('classSection').value.trim();
+  const n = Math.min(parseInt(document.getElementById('numUsers').value)||0, 20);
+  if(!school){ showToast("⚠️ Please enter school name!"); return; }
+  if(!cls){ showToast("⚠️ Please enter class & section!"); return; }
+  if(n<1){ showToast("⚠️ Enter number of users!"); return; }
+  const users = [];
+  for(let i=1;i<=n;i++) users.push((document.getElementById(`userName_${i}`)?.value||'').trim() || `User ${i}`);
+  cosmosState = { sessionActive:true, school, classSection:cls, users, mcqAnswers:{}, mcqVotes:{}, trainingDone:false, customRules:[], geminiKey:'', speakLang:'en-IN', translateTo:'' };
+  saveState();
+  document.getElementById('sessionOverlay').style.display='none';
+  activateApp();
+}
+
+function activateApp(){
+  document.getElementById('landingPage').style.display='none';
+  document.getElementById('appWrapper').style.display='block';
+  document.getElementById('sessionInfoBadge').textContent = `🏫 ${cosmosState.school} · ${cosmosState.classSection}`;
+  buildVoterChips(); renderMCQ();
+  // Always start in Training Mode; Live Mode needs training first
+  currentMode='train';
+  document.getElementById('liveSection').style.display='none';
+  document.getElementById('trainSection').style.display='block';
+  document.getElementById('btnTrain').className='mode-btn active';
+  document.getElementById('btnLive').className='mode-btn';
+  // Apply lock visual on Live button if training not done
+  const liveBtn = document.getElementById('btnLive');
+  if(!cosmosState.trainingDone){
+    liveBtn.style.opacity='0.4';
+    liveBtn.style.cursor='not-allowed';
+    liveBtn.title='Complete training first to unlock Live Mode';
   } else {
-    bar.style.display = 'none';
+    liveBtn.style.opacity='1';
+    liveBtn.style.cursor='pointer';
+    // If already trained (session restored), also unlock chat
+    enableLiveMode();
   }
 }
 
-function endTopic() {
-  closePopup('endTopicOverlay');
-  setTopic(null);
-  conversationHistory = [];
-  appendBotMsg("✅ Topic ended! Let's start fresh. What would you like to explore next? 🚀");
+function buildVoterChips(){
+  const wrap = document.getElementById('voterChips');
+  if(!wrap) return;
+  wrap.innerHTML=''; (cosmosState.users||[]).forEach(name=>{
+    const chip = document.createElement('button');
+    chip.className='voter-chip'; chip.textContent=name;
+    chip.onclick=()=>{ activeVoter=name; wrap.querySelectorAll('.voter-chip').forEach(c=>c.classList.remove('selected')); chip.classList.add('selected'); };
+    wrap.appendChild(chip);
+  });
 }
 
-function detectTopicFromText(txt) {
-  const low = txt.toLowerCase();
-  if(/solar system|planet|sun|moon|orbit|mercury|venus|earth|mars|jupiter|saturn|uranus|neptune/.test(low)) return 'Solar System';
-  if(/photosynthesis|plant|chlorophyll/.test(low)) return 'Photosynthesis';
-  if(/water cycle|evaporation|rain|cloud/.test(low)) return 'Water Cycle';
-  if(/gravity|force|newton/.test(low)) return 'Gravity';
-  if(/history|war|gandhi|independence/.test(low)) return 'History';
-  if(/maths|math|add|subtract|multiply|divide|fraction|geometry/.test(low)) return 'Maths';
-  if(/coding|programming|computer|internet|software/.test(low)) return 'Computer Science';
-  if(/grammar|noun|verb|adjective|english/.test(low)) return 'English Grammar';
-  if(/ai|artificial intelligence|machine learning/.test(low)) return 'Artificial Intelligence';
-  return null;
+function renderMCQ(){
+  const total = MCQ_QUESTIONS.length;
+  const q = MCQ_QUESTIONS[currentMCQIndex];
+  document.getElementById('mcqProgressBar').style.width = ((currentMCQIndex/total)*100)+'%';
+  document.getElementById('mcqProgressText').textContent = `Question ${currentMCQIndex+1} of ${total}`;
+  document.getElementById('mcqProgressPct').textContent = Math.round((currentMCQIndex/total)*100)+'%';
+  document.getElementById('mcqQnum').textContent = `Question ${currentMCQIndex+1} of ${total}`;
+  document.getElementById('mcqCategory').textContent = q.cat;
+  document.getElementById('mcqQuestion').textContent = q.q;
+  const optWrap = document.getElementById('mcqOptions');
+  optWrap.innerHTML='';
+  const votes = cosmosState.mcqVotes[currentMCQIndex]||{};
+  const majority = getMajorityChoice(currentMCQIndex);
+  q.opts.forEach((opt,i)=>{
+    const btn = document.createElement('button');
+    btn.className='mcq-opt';
+    if(majority!==null&&i===majority) btn.classList.add('majority');
+    const letter = String.fromCharCode(65+i);
+    btn.innerHTML=`<span class="mcq-opt-letter">${letter}</span><span>${opt}</span>`;
+    btn.onclick=()=>castVote(i);
+    optWrap.appendChild(btn);
+  });
+  renderVoteTally();
+  if(majority!==null){ document.getElementById('majorityLabel').textContent='✅ Majority: "'+q.opts[majority]+'"'; cosmosState.mcqAnswers[currentMCQIndex]=majority; saveState(); } else { document.getElementById('majorityLabel').textContent=''; }
+  const nextBtn = document.getElementById('mcqNextBtn');
+  if(currentMCQIndex>=total-1){ nextBtn.className='mcq-btn mcq-btn-finish'; nextBtn.textContent='🎓 Finish Training'; } else { nextBtn.className='mcq-btn mcq-btn-next'; nextBtn.textContent='Next →'; }
+  document.getElementById('trainCompleteBanner').style.display = cosmosState.trainingDone?'block':'none';
 }
 
-// ========== CUSTOM KB LOOKUP ==========
-function lookupCustomKB(txt) {
-  const low = txt.toLowerCase().trim();
-  // Search local + global KB
-  const allKB = [...customKB, ...globalKB];
-  for(const item of allKB) {
-    const q = (item.q || '').toLowerCase().trim();
-    const keywords = (item.keywords || '').toLowerCase().split(',').map(k=>k.trim()).filter(Boolean);
-    // Check keywords first (exact or contains)
-    for(const kw of keywords) {
-      if(kw && (low.includes(kw) || kw.includes(low))) return item.a;
-    }
-    // Then check question
-    if(q && (low === q || low.includes(q) || q.includes(low) || similarity(low, q) > 0.6)) {
-      return item.a;
-    }
-  }
-  return null;
+function castVote(optIndex){
+  if(!activeVoter){ showToast("👆 Tap your name first to vote!"); return; }
+  const idx = currentMCQIndex;
+  if(!cosmosState.mcqVotes[idx]) cosmosState.mcqVotes[idx]={};
+  Object.keys(cosmosState.mcqVotes[idx]).forEach(k=>{ cosmosState.mcqVotes[idx][k]=(cosmosState.mcqVotes[idx][k]||[]).filter(n=>n!==activeVoter); });
+  if(!cosmosState.mcqVotes[idx][optIndex]) cosmosState.mcqVotes[idx][optIndex]=[];
+  cosmosState.mcqVotes[idx][optIndex].push(activeVoter);
+  saveState(); renderMCQ();
+  showToast(`Vote recorded for ${activeVoter}!`);
 }
 
-function similarity(a, b) {
-  const wordsA = new Set(a.split(/\s+/).filter(w => w.length > 2));
-  const wordsB = new Set(b.split(/\s+/).filter(w => w.length > 2));
-  if(wordsA.size === 0 || wordsB.size === 0) return 0;
-  let overlap = 0;
-  wordsA.forEach(w => { if(wordsB.has(w)) overlap++; });
-  return overlap / Math.max(wordsA.size, wordsB.size);
+function getMajorityChoice(qIdx){
+  const votes = cosmosState.mcqVotes[qIdx]||{};
+  let max=-1, winner=null;
+  Object.keys(votes).forEach(k=>{ const cnt=(votes[k]||[]).length; if(cnt>max){ max=cnt; winner=parseInt(k); } });
+  if(max===0) return null;
+  let tied = Object.keys(votes).filter(k=>(votes[k]||[]).length===max);
+  if(tied.length>1) return null;
+  return winner;
 }
 
-function lookupKB(txt) {
-  const low = txt.toLowerCase().trim();
-  for(const item of builtinKB) {
-    for(const kw of item.q) {
-      if(low.includes(kw) || kw.includes(low.substring(0,12))) return {text:item.a, math:item.math||false};
-    }
-  }
-  return null;
+function renderVoteTally(){
+  const tally = document.getElementById('voteTally');
+  const votes = cosmosState.mcqVotes[currentMCQIndex]||{};
+  const q = MCQ_QUESTIONS[currentMCQIndex];
+  let html='';
+  q.opts.forEach((_,i)=>{ const names=(votes[i]||[]); if(names.length>0){ const letter=String.fromCharCode(65+i); html+=`<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;background:#f0eeff;color:#9c91ff">${letter}: ${names.join(', ')}</span>`; } });
+  tally.innerHTML = html || '<span style="font-size:11px;color:#ccc">No votes yet — tap a name then select an option</span>';
 }
 
-// ========== 18+ / IRRELEVANT CONTENT FILTER ==========
-const BLOCKED_PATTERNS = [
-  // 18+ / adult
-  /\bsex\b|\bporn\b|\bnude\b|\bnaked\b|\bxxx\b|\berotic\b|\badult content\b|\bboobs\b|\bnipple\b|\bpenis\b|\bvagina\b|\bintercourse\b|\bfornication\b|\bmasturbat\b|\bcondom\b|\bviagra\b/i,
-  // Violence / weapons
-  /\bhow to (make|build|create|assemble) (a )?(bomb|gun|weapon|explosive|poison|drug)\b|\bkill (someone|a person|people)\b|\bhow to (kill|murder|stab|shoot)\b/i,
-  // Drugs
-  /\bhow to (get|make|buy|use|take) (drugs|weed|cocaine|heroin|meth|lsd|mdma|ecstasy)\b|\bget high\b|\bsmoke weed\b/i,
-  // Abuse / hate
-  /\bhate speech\b|\bracist\b|\bslur\b/i,
-  // Gambling / betting
-  /\bhow to (win|cheat).*(casino|poker|bet|gambling|slot)\b/i,
-  // Suicide / self-harm
-  /\bhow to (commit suicide|kill myself|self[- ]harm|cut myself)\b/i,
-];
-
-// Topics that are simply outside COSMOS's educational scope
-const OFF_TOPIC_PATTERNS = [
-  /\b(stock|crypto|bitcoin|forex|trading|invest) (tips|advice|picks|signals)\b/i,
-  /\b(dating|hook[ -]?up|tinder|relationship advice)\b/i,
-  /\b(movie torrent|pirat|crack software|keygen|hack (netflix|spotify|account))\b/i,
-];
-
-function isBlockedContent(txt) {
-  for(const p of BLOCKED_PATTERNS) if(p.test(txt)) return { blocked: true, type: 'inappropriate' };
-  for(const p of OFF_TOPIC_PATTERNS) if(p.test(txt)) return { blocked: true, type: 'offtopic' };
-  return { blocked: false };
+function mcqNext(){
+  const total = MCQ_QUESTIONS.length;
+  if(currentMCQIndex>=total-1){ finishTraining(); } else { currentMCQIndex++; renderMCQ(); }
 }
 
-// ========== SEND MESSAGE ==========
-async function sendMessage() {
-  const input = document.getElementById('msgInput');
-  const txt = input.value.trim();
-  if(!txt && !uploadedImageData) return;
+function mcqPrev(){ if(currentMCQIndex>0){ currentMCQIndex--; renderMCQ(); } }
 
-  // ── Block 18+ / irrelevant content before anything else ──
-  if(txt) {
-    const { blocked, type } = isBlockedContent(txt);
-    if(blocked) {
-      showPopup('badUseOverlay');
-      return;
-    }
+function finishTraining(){
+  cosmosState.trainingDone=true; saveState(); spawnSparkles(); renderMCQ();
+  showToast("Training complete! Switching to Live Mode...");
+  setTimeout(()=>{ enableLiveMode(); switchMode('live'); }, 1800);
+}
+
+function enableLiveMode(){
+  const liveBtn = document.getElementById('btnLive');
+  liveBtn.style.opacity='1';
+  liveBtn.style.cursor='pointer';
+  liveBtn.title='';
+  const inp = document.getElementById('msgInput');
+  if(inp){ inp.disabled=false; inp.placeholder='Ask me anything… your class has trained me!'; }
+  const sendBtn = document.querySelector('.send-btn');
+  if(sendBtn) sendBtn.disabled=false;
+  // Swap welcome card to show trained message
+  const chatMessages = document.getElementById('chatMessages');
+  if(chatMessages && !cosmosState._liveUnlocked){
+    cosmosState._liveUnlocked = true;
+    chatMessages.innerHTML = `
+      <div style="background:linear-gradient(135deg,#6c63ff,#ff6584);border-radius:20px;color:#fff;padding:18px 20px;margin-bottom:14px;text-align:center">
+        <h2 style="font-family:'Baloo 2',cursive;font-size:18px;margin-bottom:4px">Training Complete!</h2>
+        <p style="font-size:13px;opacity:0.9;line-height:1.5">COSMOS has been shaped by your class. Ask anything!</p>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;justify-content:center">
+          <span style="background:rgba(255,255,255,0.25);border:1.5px solid rgba(255,255,255,0.4);color:#fff;border-radius:20px;padding:5px 14px;font-size:12px;font-weight:700;cursor:pointer" onclick="sendChip(this)">What is photosynthesis?</span>
+          <span style="background:rgba(255,255,255,0.25);border:1.5px solid rgba(255,255,255,0.4);color:#fff;border-radius:20px;padding:5px 14px;font-size:12px;font-weight:700;cursor:pointer" onclick="sendChip(this)">Help me with fractions</span>
+          <span style="background:rgba(255,255,255,0.25);border:1.5px solid rgba(255,255,255,0.4);color:#fff;border-radius:20px;padding:5px 14px;font-size:12px;font-weight:700;cursor:pointer" onclick="sendChip(this)">How to study better?</span>
+        </div>
+      </div>`;
   }
+}
 
-  msgCount++;
-  if(msgCount % 5 === 0) showPopup('dependPopup');
-
-  // If image is uploaded, show image indicator bubble
-  if(uploadedImageData) {
-    appendImageSentMsg(uploadedImageName);
-  }
-  if(txt) {
-    appendMsg('user', txt);
-    // Add to conversation history for context
-    conversationHistory.push({role:'user', content: txt});
-    // Keep history to last 10 messages to avoid token overflow
-    if(conversationHistory.length > 20) conversationHistory = conversationHistory.slice(-20);
-  }
-
-  input.value = '';
-  autoResize(input);
-
-  const imgData = uploadedImageData;
-  const imgName = uploadedImageName;
-  clearImage();
-
-  showTyping();
-
-  // Detect topic for context
-  if(txt) {
-    const detectedTopic = detectTopicFromText(txt);
-    if(detectedTopic && !currentTopic) {
-      setTopic(detectedTopic);
-    } else if(currentTopic && detectedTopic && detectedTopic !== currentTopic) {
-      // New topic detected — ask to end current
-      topicMsgCount++;
-      if(topicMsgCount >= 3) {
-        document.getElementById('endTopicName').textContent = currentTopic;
-        showPopup('endTopicOverlay');
-      }
-    }
-    if(currentTopic) topicMsgCount++;
-  }
-
-  // Check if student is answering a pending math question
-  if(pendingMathContext) {
-    const numMatch = txt.match(/\d+/);
-    if(numMatch) {
-      const studentAns = parseInt(numMatch[0]);
-      const {ans, a, b, op} = pendingMathContext;
-      hideTyping();
-      if(studentAns === ans) {
-        pendingMathContext = null;
-        const praise = ['🎉 Wohoo! Spot on! You are a STAR! ⭐','🎊 Correct! Amazing work, genius! 🏆','✅ YES! That\'s exactly right! I knew you could do it! 🚀','🌟 Brilliant! Perfect answer! You rock! 🎸'];
-        const r = praise[Math.floor(Math.random()*praise.length)];
-        appendBotMsgWithSpeak(r, voiceInputMode);
-      } else if(Math.abs(studentAns - ans) <= 2) {
-        const r = `Hmm, so close! 🤏 You said <strong>${studentAns}</strong>, but that's not quite it. Try once more — remember to ${pendingMathContext.hint} <strong>${a}</strong> and <strong>${b}</strong> carefully!`;
-        appendBotMsgWithSpeak(r, voiceInputMode);
-      } else {
-        const r = `Not quite! 🙈 You said <strong>${studentAns}</strong>. Hint: try to ${pendingMathContext.hint} <strong>${a}</strong> and <strong>${b}</strong> step by step. You've got this!`;
-        appendBotMsgWithSpeak(r, voiceInputMode);
-      }
-      return;
-    }
-  }
-
-  // Step 1: Custom KB (local + global Firebase)
-  if(txt) {
-    const customMatch = lookupCustomKB(txt);
-    if(customMatch) {
-      hideTyping();
-      const reply = '🧠 <em style="font-size:11px;color:#9c91ff">[From my training]</em><br/>' + customMatch;
-      appendBotMsgWithSpeak(reply, voiceInputMode);
-      conversationHistory.push({role:'assistant', content: customMatch});
-      return;
-    }
-  }
-
-  // Step 2: Gemini API with full conversation context
-  if(geminiConnected && geminiKey) {
-    try {
-      const reply = await callGemini(txt, imgData);
-      hideTyping();
-      // If Gemini flagged it as blocked content
-      if(reply.trim() === 'BLOCKED_CONTENT') {
-        showPopup('badUseOverlay');
-        return;
-      }
-      let finalReply = reply;
-      // Translate if needed (works with or without Gemini via MyMemory fallback)
-      if(translateTo) {
-        finalReply = await translateText(reply, translateTo);
-      }
-      const formatted = finalReply
-        .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
-        .replace(/\*(.*?)\*/g,'<em>$1</em>')
-        .replace(/\n/g,'<br/>');
-      appendBotMsgWithSpeak(formatted, voiceInputMode, finalReply);
-      conversationHistory.push({role:'assistant', content: reply});
-    } catch(e) {
-      hideTyping();
-      appendBotMsgWithSpeak('⚠️ ' + e.message + '<br/>Falling back to built-in knowledge! 🧠', voiceInputMode);
-      localReply(txt, imgData);
-    }
+function switchMode(mode){
+  // Block switching to Live Mode if training not done
+  if(mode==='live' && !cosmosState.trainingDone){
+    showToast("Complete training first to unlock Live Mode!");
     return;
   }
-
-  // Step 3: Offline built-in KB
-  setTimeout(()=>{hideTyping();localReply(txt, imgData);}, 900 + Math.random()*500);
+  currentMode=mode;
+  document.getElementById('liveSection').style.display=mode==='live'?'block':'none';
+  document.getElementById('trainSection').style.display=mode==='train'?'block':'none';
+  document.getElementById('btnLive').className='mode-btn'+(mode==='live'?' active':'');
+  document.getElementById('btnTrain').className='mode-btn'+(mode==='train'?' active':'');
+  // Update Live Mode button clickability
+  const liveBtn = document.getElementById('btnLive');
+  if(!cosmosState.trainingDone){
+    liveBtn.style.opacity='0.45';
+    liveBtn.style.cursor='not-allowed';
+    liveBtn.title='Complete training first';
+  } else {
+    liveBtn.style.opacity='1';
+    liveBtn.style.cursor='pointer';
+    liveBtn.title='';
+  }
 }
 
-function localReply(txt, imgData) {
-  if(imgData && !txt) {
-    const r = "📷 I can see you uploaded an image! I'd love to analyse it, but I need your Gemini API key for image analysis. Please enter it above and reconnect! 🔑";
-    appendBotMsgWithSpeak(r, voiceInputMode);
-    return;
-  }
-
-  const math = detectMath(txt);
-  if(math) {
-    const {a, b, op, ans, hint} = math;
-    pendingMathContext = {a, b, op, ans, hint};
-    const hintMsgs = {
-      add:`To find <strong>${a} + ${b}</strong>, think of putting ${a} objects and ${b} objects together and counting them all! 🔢 What total do you get?`,
-      subtract:`For <strong>${a} - ${b}</strong>, start at ${a} and count backwards ${b} steps! ⬅️ What number do you land on?`,
-      multiply:`For <strong>${a} × ${b}</strong>, try adding ${a} together ${b} times. What's the total? 🤔`,
-      divide:`For <strong>${a} ÷ ${b}</strong>, imagine sharing ${a} sweets equally among ${b} friends. How many does each friend get? 🍬`
-    };
-    const r = `🧮 Great maths question! I won't just hand you the answer — that's your discovery to make! 😊<br/><br/>${hintMsgs[hint]}<br/><br/>Take your time, write it down, and tell me your answer!`;
-    appendBotMsgWithSpeak(r, voiceInputMode);
-    return;
-  }
-
-  const customMatch = lookupCustomKB(txt);
-  if(customMatch) {
-    const reply = '🧠 <em style="font-size:11px;color:#9c91ff">[From my training]</em><br/>' + customMatch;
-    appendBotMsgWithSpeak(reply, voiceInputMode);
-    return;
-  }
-
-  const found = lookupKB(txt);
-  if(found) {
-    const reply = typeof found === 'object' ? found.text : found;
-    appendBotMsgWithSpeak(reply.replace(/\n/g,'<br/>'), voiceInputMode);
-    return;
-  }
-
-  const low = txt.toLowerCase();
-  if(/^(hi|hello|hey|howdy|hiya|namaste|helo|hii|hiii)/.test(low)) {
-    const extras = [
-      " I love learning alongside curious minds like yours! What subject shall we explore today? 🚀",
-      " Ready to go on a learning adventure together? Ask me anything — science, maths, history and more! 🌟",
-      " I'm here to make learning fun and easy! What are you curious about today? 😊",
-      " It's a great day to learn something new! What topic is on your mind? 🎉"
-    ];
-    const extra = extras[Math.floor(Math.random()*extras.length)];
-    appendBotMsgWithSpeak("Hi! I am COSMOS, your AI chatbot developed by Cognospace. 🌌" + extra, voiceInputMode);
-    return;
-  }
-  if(/how are you|how r u/.test(low)) {
-    appendBotMsgWithSpeak("I'm doing fantastic, thanks for asking! 😄 I'm powered by curiosity — and yours makes me extra happy! What would you like to learn today?", voiceInputMode);
-    return;
-  }
-  if(/thank(s| you)|thx/.test(low)) {
-    appendBotMsgWithSpeak("You're very welcome! 🤗 Keep being curious and keep learning — you're doing amazing! Is there anything else I can help you with?", voiceInputMode);
-    return;
-  }
-  if(/who (are|r) you|what is cosmos/.test(low)) {
-    appendBotMsgWithSpeak("I'm <strong>COSMOS</strong> 🌌 — a friendly AI learning assistant built by <strong>Cognospace</strong>! I'm here to guide you through learning with hints, encouragement, and fun facts. I believe in AI Ethics — using AI for good! 🌟", voiceInputMode);
-    return;
-  }
-
-  const fallbacks = [
-    "Great question! 🤔 For the most complete answer, connect your <strong>Gemini API key</strong> above — then I can answer <em>anything</em>! Or switch to 🧠 <strong>Training Mode</strong> to teach me this yourself!",
-    "Interesting! 🌟 Connect <strong>Gemini</strong> using the key box above and I'll be able to answer almost <em>anything</em> you ask! 🚀",
-    "Good one! 📚 Connect <strong>Gemini</strong> above and I'll give you a full answer! 🚀"
-  ];
-  appendBotMsgWithSpeak(fallbacks[Math.floor(Math.random()*fallbacks.length)], voiceInputMode);
+function addCustomRule(){
+  const trigger = document.getElementById('crTrigger').value.trim().toLowerCase();
+  const type = document.getElementById('crType').value;
+  const response = document.getElementById('crResponse').value.trim();
+  if(!trigger){ showToast("Enter a trigger!"); return; }
+  if(type==='answer' && !response){ showToast("Enter a response!"); return; }
+  cosmosState.customRules.push({trigger,type,response}); saveState();
+  document.getElementById('crTrigger').value=''; document.getElementById('crResponse').value='';
+  renderCustomRules(); showToast(`Rule added: "${trigger}"`); spawnSparkles();
 }
 
-// ========== QUICK CHIPS ==========
-function sendChip(el) {
-  document.getElementById('msgInput').value = el.textContent.replace(/^\W+/,'');
-  sendMessage();
+function renderCustomRules(){
+  const list = document.getElementById('customRulesList');
+  if(!list) return;
+  if(!cosmosState.customRules||cosmosState.customRules.length===0){ list.innerHTML='<p style="font-size:12px;color:#ccc;text-align:center">No custom rules yet</p>'; return; }
+  list.innerHTML = cosmosState.customRules.map((r,i)=>`<div class="custom-rule-item"><div><div style="font-weight:800;color:#e65100">"${r.trigger}"</div>${r.type==='answer'?`<div style="color:#555;margin-top:2px">"${r.response}"</div>`:''}</div></div>`).join('');
 }
 
-// ========== APPEND MESSAGES ==========
-function appendMsg(type, text) {
+function showPopup(id){ document.getElementById(id).style.display='flex'; }
+function closePopup(id){ document.getElementById(id).style.display='none'; }
+function showToast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3200); }
+function spawnSparkles(){ const emojis=['⭐','🌟','✨']; for(let i=0;i<5;i++){ setTimeout(()=>{ const s=document.createElement('div'); s.className='sparkle'; s.textContent=emojis[Math.floor(Math.random()*emojis.length)]; s.style.left=Math.random()*80+10+'%'; s.style.top=Math.random()*60+20+'%'; document.body.appendChild(s); setTimeout(()=>s.remove(),1000); },i*100); } }
+
+function speakText(btn){ speak(btn.dataset.text||''); }
+
+function speak(rawText){
+  if(!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const text = removeEmojis(rawText);
+  if(!text.trim()) return;
+  const u = new SpeechSynthesisUtterance(text);
+  u.rate = 0.92; u.pitch = 1.05;
+  const voices = window.speechSynthesis.getVoices();
+  const pref = voices.find(v=>v.lang.startsWith('en')&&v.name.toLowerCase().includes('female'))
+            || voices.find(v=>v.lang.startsWith('en'))
+            || voices[0];
+  if(pref) u.voice = pref;
+  window.speechSynthesis.speak(u);
+}
+
+function appendBotMsgWithSpeak(html, autoSpeak, plainText){
   const wrap = document.getElementById('chatMessages');
-  const div = document.createElement('div');
-  div.className = `msg ${type}`;
-  const now = new Date();
-  const time = now.getHours()+':'+(now.getMinutes()<10?'0':'')+now.getMinutes();
-  const avatarHtml = type === 'user'
-    ? `<div class="avatar user-av">👤</div>`
-    : `<div class="avatar bot">✦</div>`;
-  div.innerHTML = `${avatarHtml}<div class="msg-content"><div class="bubble ${type==='user'?'user':'bot'}">${text}</div><div class="msg-meta"><span class="msg-time">${time}</span></div></div>`;
-  wrap.appendChild(div);
-  wrap.scrollTop = wrap.scrollHeight;
-  return div;
-}
-
-function appendBotMsgWithSpeak(html, autoSpeak, plainText) {
-  const wrap = document.getElementById('chatMessages');
+  if(!wrap) return;
   const div = document.createElement('div');
   div.className = 'msg';
   const now = new Date();
   const time = now.getHours()+':'+(now.getMinutes()<10?'0':'')+now.getMinutes();
   const plain = plainText || html.replace(/<[^>]+>/g,'');
-  // Unique ID for this message's speak button
-  const sid = 'spk_' + Date.now() + Math.floor(Math.random()*1000);
-  div.innerHTML = `
-    <div class="avatar bot">✦</div>
-    <div class="msg-content">
+  const sid = 'spk_'+Date.now()+Math.floor(Math.random()*1000);
+  div.innerHTML = `<div class="avatar bot" style="width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;background:linear-gradient(135deg,#6c63ff,#ff6584);box-shadow:0 3px 12px rgba(108,99,255,0.35)">✦</div>
+    <div style="display:flex;flex-direction:column;max-width:75%">
       <div class="bubble bot">${html}</div>
-      <div class="msg-meta">
-        <span class="msg-time">${time}</span>
-        <button class="speak-btn" id="${sid}" title="Read aloud" onclick="speakText(this,'${sid}')">🔊</button>
+      <div style="display:flex;align-items:center;gap:6px;margin-top:3px">
+        <span style="font-size:10px;color:#bbb">${time}</span>
+        <button style="background:none;border:none;cursor:pointer;font-size:13px;color:#bbb;padding:0 2px;transition:color 0.2s;line-height:1" id="${sid}" title="Read aloud" onclick="speakText(this)">🔊</button>
       </div>
     </div>`;
-  // Store plain text on button for reading
-  div.querySelector(`#${sid}`).dataset.text = plain;
+  div.querySelector('#'+sid).dataset.text = plain;
   wrap.appendChild(div);
   wrap.scrollTop = wrap.scrollHeight;
-  // Auto-speak only for voice input mode
   if(autoSpeak) speak(plain.substring(0, 400));
 }
 
-function appendBotMsg(html) {
-  appendBotMsgWithSpeak(html, false);
-}
+function appendBotMsg(html){ appendBotMsgWithSpeak(html, false); }
 
-// Image-sent indicator from user side
-function appendImageSentMsg(name) {
+function appendMsg(type, text){
   const wrap = document.getElementById('chatMessages');
+  if(!wrap) return;
   const div = document.createElement('div');
-  div.className = 'msg user';
+  div.className = 'msg '+(type==='user'?'user':'');
+  if(type==='user') div.style.flexDirection='row-reverse';
   const now = new Date();
   const time = now.getHours()+':'+(now.getMinutes()<10?'0':'')+now.getMinutes();
-  div.innerHTML = `
-    <div class="avatar user-av">👤</div>
-    <div class="msg-content" style="align-items:flex-end">
-      <div class="img-sent-bubble">
-        <span class="img-sent-icon">🖼️</span>
-        <div>
-          <div style="font-size:12px;color:#388e3c;font-weight:700">Image Uploaded ✅</div>
-          <div style="font-size:11px;color:#555;font-weight:600">${name || 'image.jpg'}</div>
-        </div>
-      </div>
-      <div class="msg-meta"><span class="msg-time">${time}</span></div>
-    </div>`;
+  const avUser = `<div class="avatar" style="width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;background:linear-gradient(135deg,#ffb347,#ff6584);box-shadow:0 3px 12px rgba(255,101,132,0.3)">👤</div>`;
+  const avBot  = `<div class="avatar" style="width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;background:linear-gradient(135deg,#6c63ff,#ff6584);box-shadow:0 3px 12px rgba(108,99,255,0.35)">✦</div>`;
+  const bubbleClass = type==='user' ? 'bubble user' : 'bubble bot';
+  const align = type==='user' ? 'align-items:flex-end' : 'align-items:flex-start';
+  div.innerHTML = `${type==='user'?avUser:avBot}<div style="display:flex;flex-direction:column;max-width:75%;${align}"><div class="${bubbleClass}">${text}</div><div style="margin-top:3px"><span style="font-size:10px;color:#bbb">${time}</span></div></div>`;
   wrap.appendChild(div);
   wrap.scrollTop = wrap.scrollHeight;
 }
 
-let typingEl = null;
-function showTyping() {
+function showTyping(){
   const wrap = document.getElementById('chatMessages');
-  typingEl = document.createElement('div');
-  typingEl.className = 'msg';
-  typingEl.id = 'typingIndicator';
-  typingEl.innerHTML = `<div class="avatar bot">✦</div><div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>`;
-  wrap.appendChild(typingEl);
-  wrap.scrollTop = wrap.scrollHeight;
+  if(!wrap) return;
+  const el = document.createElement('div');
+  el.className='msg'; el.id='typingIndicator';
+  el.innerHTML = `<div style="width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;background:linear-gradient(135deg,#6c63ff,#ff6584)">✦</div><div style="display:flex;gap:5px;padding:10px 14px;background:#f0eeff;border-radius:18px;border-bottom-left-radius:4px;width:fit-content"><div style="width:8px;height:8px;background:#6c63ff;border-radius:50%;animation:bounce 1.2s ease-in-out infinite"></div><div style="width:8px;height:8px;background:#6c63ff;border-radius:50%;animation:bounce 1.2s ease-in-out infinite;animation-delay:0.2s"></div><div style="width:8px;height:8px;background:#6c63ff;border-radius:50%;animation:bounce 1.2s ease-in-out infinite;animation-delay:0.4s"></div></div>`;
+  wrap.appendChild(el); wrap.scrollTop = wrap.scrollHeight;
 }
-function hideTyping() {
-  const t = document.getElementById('typingIndicator');
-  if(t) t.remove();
-}
+function hideTyping(){ const t=document.getElementById('typingIndicator'); if(t) t.remove(); }
 
-// ========== EMOJI STRIPPER ==========
-function stripEmojis(text) {
-  return text
-    // Remove all emoji / pictograph / symbol Unicode ranges
-    .replace(/[\u{1F000}-\u{1FFFF}]/gu, '')
-    .replace(/[\u{2600}-\u{27BF}]/gu, '')
-    .replace(/[\u{FE00}-\u{FE0F}]/gu, '')
-    .replace(/[\u{1F900}-\u{1F9FF}]/gu, '')
-    .replace(/[\u{1FA00}-\u{1FAFF}]/gu, '')
-    // Variation selectors & ZWJ sequences
-    .replace(/\uFE0F/g, '')
-    .replace(/\u200D/g, '')
-    // Clean up extra whitespace left behind
-    .replace(/\s{2,}/g, ' ')
-    .trim();
-}
-
-// ========== SPEECH — per-message speaker ==========
-function speakText(btn, sid) {
-  const text = stripEmojis(btn.dataset.text || '');
-  speak(text);
-}
-
-function speak(text) {
-  if('speechSynthesis' in window) {
-    window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(stripEmojis(text));
-    u.rate = 0.9; u.pitch = 1.1;
-    const voices = window.speechSynthesis.getVoices();
-    const preferred = voices.find(v=>v.lang.startsWith('en')&&v.name.toLowerCase().includes('female'))||voices.find(v=>v.lang.startsWith('en'))||voices[0];
-    if(preferred) u.voice = preferred;
-    window.speechSynthesis.speak(u);
-  }
-}
-
-// ========== MIC ==========
-function toggleMic() {
-  if(!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
-    showToast("🎙️ Mic not supported in this browser. Try Chrome!");
-    return;
-  }
-  if(isRecording) {
-    recognition.stop();
-    return;
-  }
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  recognition = new SR();
-  recognition.lang = speakLang || 'en-IN';
-  recognition.interimResults = false;
-  recognition.onstart = () => {
-    isRecording = true;
-    voiceInputMode = true; // flag voice input so response is also spoken
-    document.getElementById('micBtn').classList.add('recording');
-    document.getElementById('micBtn').textContent = '⏹️';
-    showToast("🎙️ Listening… speak now!");
-  };
-  recognition.onresult = (e) => {
-    const transcript = e.results[0][0].transcript;
-    document.getElementById('msgInput').value = transcript;
-    autoResize(document.getElementById('msgInput'));
-    sendMessage();
-  };
-  recognition.onend = () => {
-    isRecording = false;
-    document.getElementById('micBtn').classList.remove('recording');
-    document.getElementById('micBtn').textContent = '🎙️';
-  };
-  recognition.onerror = (e) => {
-    showToast("❌ Mic error: " + e.error);
-    isRecording = false;
-    voiceInputMode = false;
-    document.getElementById('micBtn').classList.remove('recording');
-    document.getElementById('micBtn').textContent = '🎙️';
-  };
-  recognition.start();
-}
-
-// ========== TRANSLATION POPUP ==========
-function openTranslatePopup() {
-  document.getElementById('speakLangSelect').value = speakLang;
-  document.getElementById('translateToSelect').value = translateTo;
-  showPopup('translateOverlay');
-}
-
-function applyTranslation() {
-  speakLang = document.getElementById('speakLangSelect').value;
-  translateTo = document.getElementById('translateToSelect').value;
-  localStorage.setItem('cosmos_speakLang', speakLang);
-  localStorage.setItem('cosmos_translateTo', translateTo);
-  closePopup('translateOverlay');
-  const langLabel = translateTo ? `Translating to ${translateTo}` : 'No translation';
-  showToast(`🌐 ${langLabel} | 🎙️ ${speakLang}`);
-  appendBotMsg(`🌐 Translation updated! Voice input language: <strong>${speakLang}</strong>. Responses will be ${translateTo ? 'translated to <strong>' + translateTo + '</strong>' : 'in <strong>English</strong>'}.`);
-}
-
-// Language name → ISO code map for MyMemory free translation API (works without Gemini)
-const LANG_CODES = {
-  'Hindi':'hi','Telugu':'te','Tamil':'ta','Kannada':'kn','Malayalam':'ml',
-  'Marathi':'mr','Bengali':'bn','Gujarati':'gu','French':'fr','German':'de',
-  'Spanish':'es','Arabic':'ar','Chinese (Simplified)':'zh-CN','Japanese':'ja'
-};
-
-async function translateText(text, targetLang) {
-  if(!targetLang) return text;
-  // Strip HTML tags before sending to translation
-  const plainText = text.replace(/<[^>]+>/g, '');
-
-  // Option A: Gemini (connected) — higher quality, handles emojis & tone well
-  if(geminiConnected && geminiKey) {
-    try {
-      const r = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${geminiKey}`,
-        {
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({
-            contents:[{parts:[{text:`Translate the following student-friendly educational text to ${targetLang}. Keep the same friendly tone and keep all emojis. Return ONLY the translated text with no explanation:\n\n${plainText}`}]}]
-          })
-        }
-      );
-      const j = await r.json();
-      if(!j.error) return j.candidates[0].content.parts[0].text || text;
-    } catch(e) { /* fall through to MyMemory */ }
-  }
-
-  // Option B: MyMemory free API — works WITHOUT Gemini, no key needed
-  const langCode = LANG_CODES[targetLang];
-  if(!langCode) return text;
-  try {
-    const chunks = [];
-    for(let i = 0; i < plainText.length; i += 480) chunks.push(plainText.slice(i, i+480));
-    const translated = [];
-    for(const chunk of chunks) {
-      const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(chunk)}&langpair=en|${langCode}`;
-      const res = await fetch(url);
-      const data = await res.json();
-      translated.push(data.responseData?.translatedText || chunk);
-    }
-    return translated.join(' ');
-  } catch(e) {
-    return text;
-  }
-}
-
-// ========== IMAGE UPLOAD ==========
-function handleImageUpload(e) {
-  const file = e.target.files[0];
-  if(!file) return;
-  const reader = new FileReader();
-  reader.onload = (ev) => {
-    uploadedImageData = ev.target.result;
-    uploadedImageName = file.name;
-    const wrap = document.getElementById('imgPreviewWrap');
-    document.getElementById('imgPreviewThumb').src = uploadedImageData;
-    document.getElementById('imgPreviewName').textContent = file.name;
-    wrap.style.display = 'flex';
-    showToast("📷 Image ready! Add a question or just send.");
-  };
-  reader.readAsDataURL(file);
-}
-
-function clearImage() {
-  uploadedImageData = null;
-  uploadedImageName = '';
-  document.getElementById('imgPreviewWrap').style.display = 'none';
-  document.getElementById('imgPreviewThumb').src = '';
-  document.getElementById('imgUploadInput').value = '';
-}
-
-// ========== GEMINI WITH CONVERSATION CONTEXT ==========
-const GEMINI_MODEL = "gemini-2.5-flash-lite";
-
-const SYSTEM_PROMPT = `You are COSMOS, a warm, fun, and knowledgeable AI learning buddy for school students aged 6 to 16, built by Cognospace.
-
-IMPORTANT RULES:
-1. GENERAL KNOWLEDGE & FACTS: Answer DIRECTLY, confidently, and completely with fun context. NEVER say "search online" or "I don't know" for well-known facts.
-2. MATHS PROBLEMS: NEVER give the direct answer. Guide with a hint or method, ask the student to try.
-3. HOMEWORK / ESSAY WRITING: Kindly decline writing it for them. Offer to guide, outline, or give hints instead.
-4. STUDENT-FRIENDLY TONE: Always use simple words, short sentences, relatable examples, and encouragement. Use emojis naturally. Keep it fun! Avoid jargon. Imagine you're explaining to a 10-year-old.
-5. CONTEXT: You remember what the student asked earlier in this conversation. If they ask a follow-up question about the same topic, continue from where you left off.
-6. SAFETY: If asked anything 18+, violent, illegal, or completely off-topic for a student learning assistant, respond with ONLY this exact text and nothing else: BLOCKED_CONTENT
-6. NEVER tell students to "search online" — YOU are their learning buddy!
-7. RESPONSE LENGTH: 2–5 sentences for simple facts, more for complex topics. Never too long — keep it digestible for kids.`;
-
-async function callGemini(text, imgData) {
-  if (!geminiKey) throw new Error("No Gemini API key set");
-
-  // Build messages array with full conversation history for context
-  const messages = [];
-  // Add system context as first user message (Gemini doesn't have system role)
-  messages.push({
-    role: 'user',
-    parts: [{ text: SYSTEM_PROMPT + '\n\nRemember, you are always COSMOS, a student-friendly AI tutor.' }]
-  });
-  messages.push({ role: 'model', parts: [{ text: "Got it! I'm COSMOS, ready to help students learn in a fun, friendly way! 🌟" }] });
-
-  // Add conversation history for context continuity
-  for(const h of conversationHistory.slice(-10)) {
-    if(h.role === 'user') {
-      messages.push({ role: 'user', parts: [{ text: h.content }] });
-    } else {
-      messages.push({ role: 'model', parts: [{ text: h.content }] });
-    }
-  }
-
-  // Current message with optional image
-  const parts = [{ text: text || 'Describe this image for a student.' }];
-  if(imgData) {
-    const mimeMatch = imgData.match(/^data:(image\/[a-z]+);base64,/);
-    const mimeType = mimeMatch ? mimeMatch[1] : "image/jpeg";
-    parts.unshift({ inline_data: { mime_type: mimeType, data: imgData.split(",")[1] } });
-  }
-  messages.push({ role: 'user', parts });
-
-  const r = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${geminiKey}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ contents: messages })
-    }
-  );
-  const json = await r.json();
-  if (json.error) throw new Error("Gemini: " + json.error.message);
-  return json.candidates[0].content.parts[0].text;
-}
-
-// ========== GEMINI CONNECT ==========
-async function connectGemini() {
-  const key = document.getElementById('geminiKeyInput').value.trim();
-  if(!key) { showToast("⚠️ Please enter your Gemini API key first!"); return; }
-
-  const statusEl = document.getElementById('apiStatus');
-  statusEl.textContent = '⏳ Verifying…';
-  statusEl.className = 'api-status';
-  statusEl.style.cssText = 'background:#fff8e1;color:#f57f17;font-size:12px;font-weight:700;padding:4px 10px;border-radius:20px';
-
-  try {
-    const testRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${key}`,
-      {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
-          contents: [{role:'user', parts:[{text:'Say hi.'}]}],
-          generationConfig: {maxOutputTokens: 8}
-        })
-      }
-    );
-    const testData = await testRes.json();
-    if(!testRes.ok || testData.error) {
-      const errMsg = testData.error ? testData.error.message : 'HTTP ' + testRes.status;
-      statusEl.textContent = '❌ Key Error';
-      statusEl.className = 'api-status disconnected';
-      statusEl.style.cssText = '';
-      showToast("❌ " + errMsg.substring(0, 60));
-      appendBotMsg('🔑 Gemini rejected the key: <em>' + errMsg + '</em><br/>Get a free key from <strong>aistudio.google.com</strong> → API Keys.');
-      return;
-    }
-    geminiKey = key;
-    geminiConnected = true;
-    statusEl.textContent = '✅ Gemini Live';
-    statusEl.className = 'api-status connected';
-    statusEl.style.cssText = '';
-    showToast("🎉 Gemini connected and verified!");
-    appendBotMsg("🚀 Woohoo! Gemini <strong>2.0 Flash</strong> is verified and ready! I can now answer almost <strong>anything</strong> — and analyse images too! Ask me something! 🌟");
-    speak("Gemini connected! I can now answer anything you ask. Go ahead!");
-    spawnSparkles();
-  } catch(e) {
-    statusEl.textContent = '❌ Network Error';
-    statusEl.className = 'api-status disconnected';
-    statusEl.style.cssText = '';
-    showToast("❌ Network error — check internet connection.");
-    appendBotMsg('❌ Could not reach Google: <em>' + e.message + '</em>');
-  }
-}
-
-// ========== TRAINING MODE — with Firebase ==========
-function learnData() {
-  const q = document.getElementById('trainQ').value.trim();
-  const k = document.getElementById('trainK').value.trim();
-  const a = document.getElementById('trainA').value.trim();
-  if(!q || !a) { showToast("⚠️ Please fill in the question and answer!"); return; }
-
-  // Save locally
-  customKB.push({q, keywords: k, a});
-  localStorage.setItem('cosmos_kb', JSON.stringify(customKB));
-
-  // Save globally to Firebase
-  if(window._fb) {
-    window._fb.saveTraining(q, k, a);
-    showToast("🌍 Learnt! Shared with all COSMOS users globally! 🎓");
-  } else {
-    showToast("🎓 Learnt! Saved locally (Firebase not configured yet).");
-  }
-
-  document.getElementById('trainQ').value = '';
-  document.getElementById('trainK').value = '';
-  document.getElementById('trainA').value = '';
-  const s = document.getElementById('trainSuccess');
-  s.style.display = 'flex';
-  setTimeout(()=>s.style.display='none', 3000);
-  renderKB();
-  spawnSparkles();
-}
-
-function renderKB() {
-  const el = document.getElementById('kbItems');
-  const allKB = [...customKB.map(i=>({...i,src:'local'})), ...globalKB.map(i=>({...i,src:'global'}))];
-  if(allKB.length === 0) { el.innerHTML = '<p style="color:#bbb;font-size:13px">No custom training yet. Teach me something! 🌱</p>'; return; }
-  el.innerHTML = allKB.map((item,i)=>`
-    <div class="kb-item">
-      <div class="kb-item-text">
-        <div class="kb-q">❓ ${item.q} ${item.src==='global'?'<span style="font-size:10px;background:#e8f5e9;color:#2e7d32;padding:1px 6px;border-radius:10px;margin-left:4px">🌍 Global</span>':''}</div>
-        ${item.keywords ? `<div class="kb-k">🏷️ ${item.keywords}</div>` : ''}
-        <div class="kb-a">💡 ${(item.a||'').substring(0,80)}${(item.a||'').length>80?'…':''}</div>
-      </div>
-      ${item.src==='local' ? `<button class="del-btn" onclick="deleteKB(${i})" title="Remove">🗑️</button>` : ''}
-    </div>
-  `).join('');
-}
-
-function deleteKB(i) {
-  customKB.splice(i,1);
-  localStorage.setItem('cosmos_kb', JSON.stringify(customKB));
-  renderKB();
-  showToast("🗑️ Removed from local memory.");
-}
-
-// ========== PASSWORD PROTECTION ==========
-const COSMOS_PASSWORD = 'COSMOS';
-let pendingMode = null;
-// Modes that require password
-const PROTECTED_MODES = ['live', 'train'];
-
-function requestModeSwitch(mode) {
-  if (PROTECTED_MODES.includes(mode)) {
-    pendingMode = mode;
-    const titles = {
-      live: '🚀 Unlock Live Mode',
-      train: '🧠 Unlock Training Mode'
-    };
-    document.getElementById('pwModalTitle').textContent = titles[mode] || 'Enter Password';
-    document.getElementById('pwLockIcon').textContent = mode === 'train' ? '🔐' : '🚀';
-    document.getElementById('pwInput').value = '';
-    document.getElementById('pwInput').classList.remove('error');
-    document.getElementById('pwErrorMsg').style.display = 'none';
-    showPopup('passwordOverlay');
-    setTimeout(() => document.getElementById('pwInput').focus(), 200);
-  } else {
-    switchMode(mode);
-  }
-}
-
-function verifyPassword() {
-  const entered = document.getElementById('pwInput').value;
-  if (entered === COSMOS_PASSWORD) {
-    closePopup('passwordOverlay');
-    spawnSparkles();
-    showToast('🔓 Access granted! Welcome! 🌟');
-    const mode = pendingMode;
-    pendingMode = null;
-    if (pendingFromLanding) {
-      pendingFromLanding = false;
-      dismissLanding(mode);
-    } else if (mode) {
-      switchMode(mode);
-    }
-  } else {
-    const inp = document.getElementById('pwInput');
-    inp.classList.add('error');
-    document.getElementById('pwErrorMsg').style.display = 'block';
-    inp.value = '';
-    inp.focus();
-  }
-}
-
-function closePasswordModal() {
-  closePopup('passwordOverlay');
-  pendingMode = null;
-  pendingFromLanding = false;
-}
-
-function togglePwVisibility() {
-  const inp = document.getElementById('pwInput');
-  const btn = document.getElementById('pwEyeBtn');
-  if (inp.type === 'password') {
-    inp.type = 'text';
-    btn.textContent = '🙈';
-  } else {
-    inp.type = 'password';
-    btn.textContent = '👁️';
-  }
-  inp.focus();
-}
-
-// ========== MODE SWITCH ==========
-function switchMode(mode) {
-  currentMode = mode;
-  document.getElementById('liveSection').style.display    = mode==='live'    ? 'block' : 'none';
-  document.getElementById('trainSection').style.display   = mode==='train'   ? 'block' : 'none';
-  document.getElementById('buildSection').style.display   = mode==='build'   ? 'block' : 'none';
-  document.getElementById('previewSection').style.display = mode==='preview' ? 'block' : 'none';
-  document.getElementById('btnLive').className    = 'mode-btn' + (mode==='live'    ? ' active' : '');
-  document.getElementById('btnTrain').className   = 'mode-btn' + (mode==='train'   ? ' active' : '');
-  document.getElementById('btnBuild').className   = 'mode-btn' + (mode==='build'   ? ' active' : '');
-  document.getElementById('btnPreview').className = 'mode-btn' + (mode==='preview' ? ' active' : '');
-  if (mode==='train') { renderKB(); voiceInputMode = false; }
-}
-
-// ========== POPUP / TOAST ==========
-function showPopup(id) { document.getElementById(id).style.display = 'flex'; }
-function closePopup(id) { document.getElementById(id).style.display = 'none'; }
-
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'), 3200);
-}
-
-// ========== SPARKLES ==========
-function spawnSparkles() {
-  const emojis = ['⭐','🌟','✨','🎉','🎊','💫','🌈','🏆'];
-  for(let i=0;i<8;i++) {
-    setTimeout(()=>{
-      const s = document.createElement('div');
-      s.className = 'sparkle';
-      s.textContent = emojis[Math.floor(Math.random()*emojis.length)];
-      s.style.left = Math.random()*80+10+'%';
-      s.style.top = Math.random()*60+20+'%';
-      document.body.appendChild(s);
-      setTimeout(()=>s.remove(), 1000);
-    }, i*100);
-  }
-}
-
-// ========== UTILS ==========
-function autoResize(el) {
-  el.style.height = 'auto';
-  el.style.height = Math.min(el.scrollHeight, 100) + 'px';
-}
-
-// ========== BUILD MODE ==========
-let canvasBlocks = [];
-let dragBlockType = null;
-let blockSeq = 0;
-
-const BLOCK_DEFS = {
-  header:     { label:'🏠 Header',         color:'#ede9ff', border:'#c4b5fd',
-                inputs:[{key:'title', ph:'My Awesome Chatbot', label:'Chatbot Name / Title'}] },
-  hero:       { label:'🌟 Hero Banner',     color:'#fce4ec', border:'#f48fb1',
-                inputs:[{key:'text', ph:'Welcome! Ask me anything 🌟', label:'Banner Message'}] },
-  chatwindow: { label:'💬 Chat Window',     color:'#e0f7fa', border:'#80deea',
-                inputs:[{key:'height', ph:'300', label:'Height in pixels (e.g. 300)', type:'number'}] },
-  colorpicker:{ label:'🎨 Background',      color:'#fff8e1', border:'#ffe082',
-                inputs:[{key:'color', label:'Background Colour', type:'color', default:'#f0eeff'}] },
-  footer:     { label:'📌 Footer',          color:'#f3e5f5', border:'#ce93d8',
-                inputs:[{key:'text', ph:'Powered by COSMOS 🌟', label:'Footer Text'}] },
-  divider:    { label:'➖ Divider',          color:'#f5f5f5', border:'#bdbdbd',
-                inputs:[{key:'style', ph:'solid', label:'Line style (solid / dashed / dotted)'}] },
-  announcement:{ label:'📢 Announcement',  color:'#fff3e0', border:'#ffcc02',
-                inputs:[{key:'msg', ph:'🔔 New update! COSMOS v2 is here!', label:'Announcement text'},
-                        {key:'color', label:'Bar colour', type:'color', default:'#ff9800'}] },
-  greet:      { label:'👋 Greeting',        color:'#e8eaf6', border:'#9fa8da',
-                inputs:[{key:'msg', ph:"Hi there! I'm your chatbot 😊 How can I help?", label:'First message the bot sends'}] },
-  ifsays:     { label:'🔍 If user says…',   color:'#fce4ec', border:'#ef9a9a',
-                inputs:[{key:'trigger', ph:'hello, hi, hey, howdy', label:'Trigger words (comma-separated)'}] },
-  botreply:   { label:'💬 Bot replies…',    color:'#e0f2f1', border:'#80cbc4',
-                inputs:[{key:'reply', ph:'Great question! Here is what I know…', label:'Reply text'},
-                        {key:'emoji', ph:'🌟', label:'Emoji (optional)'}] },
-  hint:       { label:'💡 Hint',            color:'#fff3e0', border:'#ffcc80',
-                inputs:[{key:'hint', ph:'Try breaking it into small steps!', label:'Hint text'}] },
-  cheer:      { label:'🎉 Cheer',           color:'#e8f5e9', border:'#a5d6a7',
-                inputs:[{key:'msg', ph:"Amazing work! You're a star! 🌟", label:'Cheer message (shown for unknown replies)'}] },
-  quiz:       { label:'❓ Quiz Question',   color:'#fce4ec', border:'#f48fb1',
-                inputs:[{key:'q', ph:'What is 5 × 6?', label:'Question to ask'},
-                        {key:'ans', ph:'30', label:'Correct answer'}] },
-  askname:    { label:'🙋 Ask Name',        color:'#fff8e1', border:'#ffe082',
-                inputs:[{key:'prompt', ph:"What's your name?", label:'Prompt text'}] },
-  emoji:      { label:'😄 Emoji Burst',     color:'#e8f5e9', border:'#a5d6a7',
-                inputs:[{key:'emojis', ph:'🌟 ✨ 🎉 💫', label:'Emojis to display'}] },
-  delay:      { label:'⏱️ Typing Delay',    color:'#f3e5f5', border:'#ce93d8',
-                inputs:[{key:'ms', ph:'1000', label:'Delay in milliseconds (e.g. 1000 = 1 second)', type:'number'}] },
-  fallback:   { label:'🤷 Fallback Reply',  color:'#fce4ec', border:'#ef9a9a',
-                inputs:[{key:'msg', ph:"Hmm, I'm still learning about that! 🤔", label:"Reply when nothing matches"}] },
-  goodbye:    { label:'👋 Goodbye Message', color:'#e8eaf6', border:'#9fa8da',
-                inputs:[{key:'triggers', ph:'bye, goodbye, see you, exit', label:'Goodbye trigger words (comma-separated)'},
-                        {key:'msg', ph:'Bye! 👋 Keep learning and stay awesome! 🌟', label:'Goodbye message'}] },
-  gemini:     { label:'✨ Gemini AI Block', color:'#e8f0fe', border:'#4285f4',
-                inputs:[{key:'model', ph:'gemini-2.5-flash-lite', label:'Gemini Model (e.g. gemini-2.5-flash-lite)'},
-                        {key:'persona', ph:'You are a friendly tutor…', label:'AI Persona / System Prompt'},
-                        {key:'apiKeyNote', ph:'(User provides their own key at runtime)', label:'API Key Note'}] },
-  smartreply: { label:'🧠 Smart Reply Mode', color:'#e3f2fd', border:'#64b5f6',
-                inputs:[{key:'options', ph:'Yes, No, Tell me more, Give a hint', label:'Suggested reply chips (comma-separated)'}] },
-  poll:       { label:'📊 Quick Poll',      color:'#e8f5e9', border:'#66bb6a',
-                inputs:[{key:'question', ph:'Do you understand this topic?', label:'Poll question'},
-                        {key:'opt1', ph:'✅ Yes, got it!', label:'Option 1'},
-                        {key:'opt2', ph:'🤔 Mostly yes', label:'Option 2'},
-                        {key:'opt3', ph:'❌ Not yet', label:'Option 3'}] },
-  funfact:    { label:'🌍 Fun Fact',        color:'#e0f7fa', border:'#4dd0e1',
-                inputs:[{key:'fact', ph:'🐙 Octopuses have 3 hearts and blue blood!', label:'Fun fact text'},
-                        {key:'source', ph:'National Geographic', label:'Source (optional)'}] },
-  riddle:     { label:'🎭 Riddle',          color:'#fff3e0', border:'#ffa726',
-                inputs:[{key:'riddle', ph:"I have hands but can't clap. What am I?", label:'Riddle question'},
-                        {key:'answer', ph:'A clock! ⏰', label:'Answer (revealed on request)'}] },
-  badge:      { label:'🏅 Award Badge',     color:'#ede9ff', border:'#9c91ff',
-                inputs:[{key:'trigger', ph:'correct, well done, perfect', label:'Trigger words to award badge'},
-                        {key:'badge', ph:'🏆', label:'Badge emoji'},
-                        {key:'msg', ph:"🎉 You've earned the Star Learner badge!", label:'Award message'}] },
-};
-
-// ── Init drag listeners when page loads ──
-window.addEventListener('load', () => {
-  initBuildListeners();
-  renderCanvas();
-});
-
-function initBuildListeners() {
-  document.querySelectorAll('.block-chip').forEach(chip => {
-    chip.addEventListener('dragstart', e => {
-      dragBlockType = chip.dataset.block;
-      e.dataTransfer.effectAllowed = 'copy';
-      chip.style.opacity = '0.5';
-    });
-    chip.addEventListener('dragend', () => { chip.style.opacity = ''; });
-  });
-
-  const canvas = document.getElementById('buildCanvas');
-  canvas.addEventListener('dragover', e => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'copy';
-    canvas.classList.add('drag-over');
-  });
-  canvas.addEventListener('dragleave', e => {
-    if (!canvas.contains(e.relatedTarget)) canvas.classList.remove('drag-over');
-  });
-  canvas.addEventListener('drop', e => {
-    e.preventDefault();
-    canvas.classList.remove('drag-over');
-    if (dragBlockType) { addBlock(dragBlockType); dragBlockType = null; }
-  });
-}
-
-function addBlock(type) {
-  const def = BLOCK_DEFS[type];
-  if (!def) return;
-  const id = 'blk_' + (++blockSeq);
-  const config = {};
-  def.inputs.forEach(inp => { config[inp.key] = inp.default || ''; });
-  canvasBlocks.push({ id, type, config });
-  renderCanvas();
-  showToast('🧱 ' + def.label + ' block added!');
-}
-
-function renderCanvas() {
-  const canvas = document.getElementById('buildCanvas');
-  if (!canvas) return;
-  canvas.innerHTML = '';
-
-  if (canvasBlocks.length === 0) {
-    const hint = document.createElement('div');
-    hint.className = 'canvas-drop-hint';
-    hint.innerHTML = '<span style="font-size:32px">🧱</span><span>Drag blocks from the left<br/>and drop them here!</span>';
-    canvas.appendChild(hint);
-    return;
-  }
-
-  canvasBlocks.forEach((blk, idx) => {
-    const def = BLOCK_DEFS[blk.type];
-    if (!def) return;
-
-    // Connector line between blocks
-    if (idx > 0) {
-      const conn = document.createElement('div');
-      conn.className = 'block-connector';
-      conn.textContent = '▼';
-      canvas.appendChild(conn);
-    }
-
-    const wrap = document.createElement('div');
-    wrap.className = 'placed-block';
-    wrap.style.background = def.color;
-    wrap.style.borderColor = def.border;
-    wrap.style.borderWidth = '1.5px';
-    wrap.style.borderStyle = 'solid';
-
-    // Move buttons
-    const moveBtns = document.createElement('div');
-    moveBtns.className = 'block-move-btns';
-    moveBtns.innerHTML =
-      `<button class="block-mv-btn" title="Move up" onclick="moveBlock('${blk.id}',-1)">▲</button>` +
-      `<button class="block-mv-btn" title="Move down" onclick="moveBlock('${blk.id}',1)">▼</button>`;
-
-    // Body
-    const body = document.createElement('div');
-    body.className = 'placed-block-body';
-
-    const labelEl = document.createElement('div');
-    labelEl.className = 'placed-block-label';
-    labelEl.textContent = def.label;
-    body.appendChild(labelEl);
-
-    def.inputs.forEach(inp => {
-      const fieldWrap = document.createElement('div');
-      fieldWrap.style.marginBottom = '4px';
-
-      const lbl = document.createElement('div');
-      lbl.style.cssText = 'font-size:10px;color:#666;font-weight:700;margin-bottom:3px';
-      lbl.textContent = inp.label;
-      fieldWrap.appendChild(lbl);
-
-      let input;
-      if (inp.type === 'color') {
-        input = document.createElement('input');
-        input.type = 'color';
-        input.value = blk.config[inp.key] || inp.default || '#f0eeff';
-        input.style.cssText = 'width:52px;height:34px;border:none;cursor:pointer;border-radius:8px;padding:2px;background:none';
-        input.addEventListener('input', () => { blk.config[inp.key] = input.value; });
-      } else if (inp.key === 'reply' || inp.key === 'hint' || inp.key === 'msg' || inp.key === 'prompt') {
-        input = document.createElement('textarea');
-        input.rows = 2;
-        input.placeholder = inp.ph || '';
-        input.value = blk.config[inp.key] || '';
-        input.style.resize = 'none';
-        input.addEventListener('input', () => { blk.config[inp.key] = input.value; });
+function sendMessage(){
+  if(!cosmosState.trainingDone){ showToast("Complete training first!"); return; }
+  const input = document.getElementById('msgInput');
+  if(!input || input.disabled) return;
+  const txt = input.value.trim();
+  if(!txt) return;
+  // Custom rule check
+  const low = txt.toLowerCase();
+  for(const rule of (cosmosState.customRules||[])){
+    if(low.includes(rule.trigger.toLowerCase())){
+      if(rule.type==='block'){
+        appendMsg('user', txt); input.value='';
+        document.getElementById('notAllowedMsg').innerHTML = `Your class decided COSMOS should not discuss "<strong>${rule.trigger}</strong>" — this topic was blocked during training.`;
+        showPopup('notAllowedOverlay'); return;
       } else {
-        input = document.createElement('input');
-        input.type = inp.type || 'text';
-        input.placeholder = inp.ph || '';
-        input.value = blk.config[inp.key] || '';
-        input.addEventListener('input', () => { blk.config[inp.key] = input.value; });
+        appendMsg('user', txt); input.value='';
+        showTyping();
+        setTimeout(()=>{ hideTyping(); appendBotMsgWithSpeak(rule.response, false, rule.response); }, 700);
+        return;
       }
-      fieldWrap.appendChild(input);
-      body.appendChild(fieldWrap);
-    });
-
-    // Delete button
-    const delBtn = document.createElement('button');
-    delBtn.className = 'block-del-btn';
-    delBtn.title = 'Remove block';
-    delBtn.textContent = '✕';
-    delBtn.addEventListener('click', () => removeBlock(blk.id));
-
-    wrap.appendChild(moveBtns);
-    wrap.appendChild(body);
-    wrap.appendChild(delBtn);
-    canvas.appendChild(wrap);
-  });
-}
-
-function removeBlock(id) {
-  canvasBlocks = canvasBlocks.filter(b => b.id !== id);
-  renderCanvas();
-}
-
-function moveBlock(id, dir) {
-  const idx = canvasBlocks.findIndex(b => b.id === id);
-  if (idx < 0) return;
-  const newIdx = idx + dir;
-  if (newIdx < 0 || newIdx >= canvasBlocks.length) return;
-  [canvasBlocks[idx], canvasBlocks[newIdx]] = [canvasBlocks[newIdx], canvasBlocks[idx]];
-  renderCanvas();
-}
-
-function clearCanvas() {
-  if (canvasBlocks.length === 0) return;
-  canvasBlocks = [];
-  renderCanvas();
-  showToast('🗑️ Canvas cleared!');
-}
-
-// ── Build the preview HTML from blocks ──
-function buildPreviewHTML() {
-  const get = type => canvasBlocks.find(b => b.type === type);
-  const bg         = get('colorpicker')?.config?.color || '#f0eeff';
-  const headerTxt  = get('header')?.config?.title || 'My Chatbot';
-  const heroTxt    = get('hero')?.config?.text || '';
-  const footerTxt  = get('footer')?.config?.text || 'Powered by COSMOS 🌟';
-  const greetMsg   = get('greet')?.config?.msg  || 'Hi! I\'m your chatbot 😊 Ask me anything!';
-  const chatH      = parseInt(get('chatwindow')?.config?.height) || 300;
-  const askPrompt  = get('askname')?.config?.prompt || '';
-  const cheerMsg   = get('cheer')?.config?.msg || 'Keep exploring! You\'re doing great! 🚀';
-  const emojiBlock = get('emoji')?.config?.emojis || '';
-
-  // Build conversation rules
-  const rules = [];
-  let i = 0;
-  while (i < canvasBlocks.length) {
-    const blk = canvasBlocks[i];
-    if (blk.type === 'ifsays' && blk.config.trigger) {
-      const triggers = blk.config.trigger.split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
-      const replies = [];
-      let j = i + 1;
-      while (j < canvasBlocks.length && ['botreply','hint','cheer','emoji','quiz'].includes(canvasBlocks[j].type)) {
-        replies.push({ type: canvasBlocks[j].type, config: { ...canvasBlocks[j].config } });
-        j++;
-      }
-      if (triggers.length) rules.push({ triggers, replies });
-      i = j;
-    } else { i++; }
-  }
-
-  const rulesJSON = JSON.stringify(rules).replace(/</g, '\\u003c');
-  const headerHTML  = get('header')  ? `<header class="bot-header">${headerTxt}</header>` : '';
-  const heroHTML    = (get('hero') && heroTxt) ? `<div class="bot-hero">${heroTxt}</div>` : '';
-  const footerHTML  = get('footer')  ? `<footer class="bot-footer">${footerTxt}</footer>` : '';
-
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>${headerTxt}</title>
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800&family=Baloo+2:wght@700;800&display=swap" rel="stylesheet"/>
-<style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Nunito',sans-serif;background:${bg};min-height:100vh;display:flex;flex-direction:column}
-.bot-header{background:linear-gradient(135deg,#6c63ff,#9c91ff);color:#fff;padding:14px 20px;font-family:'Baloo 2',cursive;font-size:22px;font-weight:800;text-align:center;letter-spacing:0.5px}
-.bot-hero{background:linear-gradient(135deg,#ff6584,#ffb347);color:#fff;padding:11px 20px;text-align:center;font-size:14px;font-weight:700}
-.chat-area{flex:1;display:flex;flex-direction:column;padding:12px}
-.chat-box{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px;height:${chatH}px;max-height:${chatH}px;background:rgba(255,255,255,0.72);border-radius:16px;margin-bottom:10px}
-.chat-box::-webkit-scrollbar{width:4px}
-.chat-box::-webkit-scrollbar-thumb{background:linear-gradient(#6c63ff,#ff6584);border-radius:10px}
-.msg{max-width:78%;padding:10px 15px;border-radius:16px;font-size:13.5px;line-height:1.55;animation:pop .3s ease;word-break:break-word}
-@keyframes pop{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-.bot-msg{background:linear-gradient(135deg,#f0eeff,#fce4ec);color:#333;align-self:flex-start;border-bottom-left-radius:4px}
-.user-msg{background:linear-gradient(135deg,#6c63ff,#9c91ff);color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
-.typing{display:flex;gap:4px;padding:10px 14px;background:#f0eeff;border-radius:16px;border-bottom-left-radius:4px;align-self:flex-start;width:fit-content}
-.dot{width:7px;height:7px;background:#6c63ff;border-radius:50%;animation:bounce 1.2s ease-in-out infinite}
-.dot:nth-child(2){animation-delay:.2s}.dot:nth-child(3){animation-delay:.4s}
-@keyframes bounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-7px)}}
-.input-row{display:flex;gap:8px}
-.chat-input{flex:1;border:2px solid #e0e0e0;border-radius:12px;padding:10px 14px;font-family:'Nunito',sans-serif;font-size:13.5px;outline:none;transition:border .25s}
-.chat-input:focus{border-color:#6c63ff;box-shadow:0 0 0 3px rgba(108,99,255,.1)}
-.send-btn{background:linear-gradient(135deg,#6c63ff,#9c91ff);color:#fff;border:none;border-radius:12px;padding:10px 18px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;font-size:14px;transition:transform .2s}
-.send-btn:hover{transform:scale(1.07)}
-.bot-footer{background:#1a1a2e;color:rgba(255,255,255,.55);text-align:center;padding:10px 16px;font-size:12px}
-</style>
-</head>
-<body>
-${headerHTML}
-${heroHTML}
-<div class="chat-area">
-  <div class="chat-box" id="chatBox">
-    <div class="msg bot-msg">${greetMsg}</div>
-    ${askPrompt ? `<div class="msg bot-msg">${askPrompt}</div>` : ''}
-  </div>
-  <div class="input-row">
-    <input class="chat-input" id="userInput" placeholder="Type a message… 💬" autocomplete="off"
-      onkeydown="if(event.key==='Enter')send()"/>
-    <button class="send-btn" onclick="send()">Send ➤</button>
-  </div>
-</div>
-${footerHTML}
-<script>
-const rules = ${rulesJSON};
-const cheerMsg = ${JSON.stringify(cheerMsg)};
-const emojiBlock = ${JSON.stringify(emojiBlock)};
-let waitingName = ${askPrompt ? 'true' : 'false'};
-let userName = '';
-
-function addMsg(text, cls) {
-  const box = document.getElementById('chatBox');
-  const d = document.createElement('div');
-  d.className = 'msg ' + cls;
-  d.innerHTML = text;
-  box.appendChild(d);
-  box.scrollTop = box.scrollHeight;
-}
-function showTyping() {
-  const box = document.getElementById('chatBox');
-  const t = document.createElement('div');
-  t.className = 'typing';
-  t.id = 'typing';
-  t.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
-  box.appendChild(t);
-  box.scrollTop = box.scrollHeight;
-}
-function hideTyping() { const t = document.getElementById('typing'); if(t) t.remove(); }
-function botReply(text) {
-  showTyping();
-  setTimeout(() => { hideTyping(); addMsg(text, 'bot-msg'); }, 700);
-}
-function send() {
-  const inp = document.getElementById('userInput');
-  const txt = inp.value.trim();
-  if (!txt) return;
-  inp.value = '';
-  addMsg(txt, 'user-msg');
-  if (waitingName) {
-    userName = txt;
-    waitingName = false;
-    botReply('Nice to meet you, <strong>' + txt + '</strong>! 😊 Ask me anything!');
-    return;
-  }
-  const lower = txt.toLowerCase();
-  let matched = false;
-  for (const rule of rules) {
-    if (rule.triggers.some(t => lower.includes(t))) {
-      if (rule.replies.length === 0) { botReply("Hmm, I\\'m thinking! 🤔"); }
-      rule.replies.forEach((rb, ri) => {
-        const delay = ri * 900;
-        setTimeout(() => {
-          if (rb.type === 'botreply') botReply((rb.config.reply || 'Let me think…') + (rb.config.emoji ? ' ' + rb.config.emoji : ''));
-          else if (rb.type === 'hint') botReply('💡 <strong>Hint:</strong> ' + (rb.config.hint || ''));
-          else if (rb.type === 'cheer') botReply('🎉 ' + (rb.config.msg || 'Great job!'));
-          else if (rb.type === 'emoji') botReply(rb.config.emojis || '✨');
-          else if (rb.type === 'quiz') botReply('❓ <strong>' + (rb.config.q || 'Question?') + '</strong><br/><em style="font-size:12px">Try to work it out, then tell me your answer!</em>');
-        }, delay);
-      });
-      matched = true;
-      break;
     }
   }
-  if (!matched) {
-    const fallbacks = [
-      "That\\'s interesting! 🤔 I\\'m still learning about that.",
-      "Great question! Can you tell me more? 🌟",
-      cheerMsg,
-      "I\\'m not sure yet — but let\\'s figure it out together! 💪 " + emojiBlock
-    ];
-    botReply(fallbacks[Math.floor(Math.random() * fallbacks.length)]);
+  // MCQ-based off-topic block — single question (key='offtopic') covers sports, celeb, entertainment
+  const offTopicIdx = MCQ_QUESTIONS.findIndex(q=>q.key==='offtopic');
+  if(offTopicIdx>=0 && cosmosState.mcqAnswers[offTopicIdx]===1){
+    if(/\b(cricket|ipl|football|fifa|nba|nfl|goal|score|match|wicket|tournament|league|batsman|bowler|celebrity|gossip|actor|actress|bollywood|hollywood|influencer|viral|tiktok|instagram|entertainment news)\b/i.test(txt)){
+      appendMsg('user', txt); input.value='';
+      document.getElementById('notAllowedMsg').innerHTML='Your class voted during training that COSMOS should not discuss <strong>sports, celebrity gossip, or entertainment news</strong>.';
+      showPopup('notAllowedOverlay'); return;
+    }
   }
-}
-<\/script>
-</body>
-</html>`;
-}
-
-function runPreview() {
-  if (canvasBlocks.length === 0) { showToast('⚠️ Add some blocks to the canvas first!'); return; }
-  const html = buildPreviewHTML();
-  // Show preview in Preview Mode tab
-  const frame = document.getElementById('previewFullFrame');
-  frame.innerHTML = '';
-  const iframe = document.createElement('iframe');
-  iframe.style.cssText = 'width:100%;height:600px;border:none;display:block';
-  iframe.srcdoc = html;
-  frame.appendChild(iframe);
-  // Show Preview Mode tab button and switch to it
-  document.getElementById('btnPreview').style.display = '';
-  switchMode('preview');
-  spawnSparkles();
-  showToast('▶️ Preview ready! 🌟');
+  showTyping();
+  setTimeout(()=>{
+    hideTyping();
+    const low2 = txt.toLowerCase();
+    if(/^(hi|hello|hey|howdy|namaste)/.test(low2)){ appendBotMsgWithSpeak("Hi! I am COSMOS, your AI learning buddy by Cognospace. What would you like to explore today?", false); return; }
+    if(/how are you/.test(low2)){ appendBotMsgWithSpeak("I am doing great! Powered by your class's training. What would you like to learn today?", false); return; }
+    if(/thank/.test(low2)){ appendBotMsgWithSpeak("You are welcome! Keep being curious — anything else?", false); return; }
+    if(/who are you|what is cosmos/.test(low2)){ appendBotMsgWithSpeak("I am COSMOS, an AI learning assistant built by Cognospace and shaped by your class's training!", false); return; }
+    appendBotMsgWithSpeak("Great question! Connect a Gemini API key to unlock full answers, or add a Custom Rule in Training Mode.", false);
+  }, 800+Math.random()*400);
 }
 
-function exportBotLogic() {
-  if (canvasBlocks.length === 0) { showToast('⚠️ Add some blocks first!'); return; }
+function autoResize(el){ el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,100)+'px'; }
 
-  // Build a nicely formatted HTML document and print to PDF
-  const blockColors = {
-    header:'#ede9ff', hero:'#fce4ec', chatwindow:'#e0f7fa', colorpicker:'#fff8e1',
-    footer:'#f3e5f5', divider:'#f5f5f5', announcement:'#fff3e0',
-    greet:'#e8eaf6', ifsays:'#fce4ec', botreply:'#e0f2f1', hint:'#fff3e0',
-    cheer:'#e8f5e9', quiz:'#fce4ec', askname:'#fff8e1', emoji:'#e8f5e9',
-    delay:'#f3e5f5', fallback:'#fce4ec', goodbye:'#e8eaf6',
-    gemini:'#e8f0fe', smartreply:'#e3f2fd', poll:'#e8f5e9',
-    funfact:'#e0f7fa', riddle:'#fff3e0', badge:'#ede9ff'
-  };
-
-  const now = new Date();
-  const dateStr = now.toLocaleDateString('en-IN', {day:'2-digit',month:'long',year:'numeric'});
-  const timeStr = now.toLocaleTimeString('en-IN', {hour:'2-digit',minute:'2-digit'});
-
-  let blocksHTML = '';
-  canvasBlocks.forEach((blk, idx) => {
-    const def = BLOCK_DEFS[blk.type];
-    if (!def) return;
-    const bg = blockColors[blk.type] || '#f9f9f9';
-    const fields = def.inputs.map(inp => {
-      const val = blk.config[inp.key] || '(not set)';
-      return `<div style="margin:4px 0"><span style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.5px">${inp.label}:</span><br/><span style="font-size:12px;color:#333">${val}</span></div>`;
-    }).join('');
-    blocksHTML += `
-      <div style="background:${bg};border-radius:12px;padding:12px 14px;margin-bottom:10px;border:1.5px solid rgba(0,0,0,0.08);page-break-inside:avoid">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-          <span style="background:rgba(108,99,255,0.12);color:#6c63ff;font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px">#${idx+1}</span>
-          <strong style="font-size:13px;color:#333">${def.label}</strong>
-        </div>
-        ${fields}
-      </div>`;
-  });
-
-  const pdfHTML = `<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8"/>
-<title>COSMOS Bot Logic Export</title>
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Baloo+2:wght@700;800&display=swap" rel="stylesheet"/>
-<style>
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:'Nunito',sans-serif;background:#fff;padding:32px;color:#333;max-width:700px;margin:0 auto}
-  @media print{body{padding:20px}@page{margin:1.5cm;size:A4}}
-  .header-banner{background:linear-gradient(135deg,#6c63ff,#ff6584,#ffb347);border-radius:16px;padding:24px;color:#fff;text-align:center;margin-bottom:24px}
-  .cosmos-brand{font-family:'Baloo 2',cursive;font-size:32px;font-weight:800;letter-spacing:1px}
-  .export-meta{font-size:13px;opacity:0.85;margin-top:4px}
-  .section-title{font-family:'Baloo 2',cursive;font-size:18px;color:#6c63ff;margin:20px 0 12px;display:flex;align-items:center;gap:8px}
-  .stats-row{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap}
-  .stat-chip{background:#f0eeff;border-radius:10px;padding:8px 16px;font-size:12px;font-weight:700;color:#6c63ff;text-align:center}
-  .stat-chip span{display:block;font-size:20px;font-weight:800;color:#6c63ff}
-  .footer-note{margin-top:28px;border-top:2px dashed #e0e0e0;padding-top:16px;font-size:11px;color:#aaa;text-align:center;line-height:1.7}
-  .watermark{font-family:'Baloo 2',cursive;color:#6c63ff;font-weight:800}
-</style>
-</head>
-<body>
-  <div class="header-banner">
-    <div class="cosmos-brand">✦ COSMOS</div>
-    <div style="font-size:14px;opacity:0.85;margin-top:2px">Chatbot Logic Export — by Cognospace</div>
-    <div class="export-meta">Generated on ${dateStr} at ${timeStr}</div>
-  </div>
-
-  <div class="stats-row">
-    <div class="stat-chip"><span>${canvasBlocks.length}</span>Total Blocks</div>
-    <div class="stat-chip"><span>${canvasBlocks.filter(b=>b.type==='ifsays').length}</span>Trigger Rules</div>
-    <div class="stat-chip"><span>${canvasBlocks.filter(b=>b.type==='botreply').length}</span>Bot Replies</div>
-    <div class="stat-chip"><span>${canvasBlocks.filter(b=>b.type==='quiz').length}</span>Quiz Blocks</div>
-  </div>
-
-  <div class="section-title">🧱 Block Configuration</div>
-  ${blocksHTML}
-
-  <div class="footer-note">
-    <div>📄 This PDF was exported from <span class="watermark">COSMOS</span> — Your Friendly AI Learning Companion</div>
-    <div style="margin-top:4px">Built with ❤️ by <strong>Cognospace</strong> · cognospace.in · © 2026</div>
-  </div>
-
-  <script>window.onload=()=>{window.print();}<\/script>
-</body>
-</html>`;
-
-  const w = window.open('', '_blank', 'width=750,height=900');
-  w.document.write(pdfHTML);
-  w.document.close();
-  showToast('📄 PDF export opened! Print to save. 🎉');
+function sendChip(el){
+  const inp = document.getElementById('msgInput');
+  if(inp){ inp.value=el.textContent.replace(/^\W+/,''); sendMessage(); }
 }
 
-// ========== LANDING PAGE ==========
-function generateStars() {
-  const container = document.getElementById('landingStars');
-  if (!container) return;
-  for (let i = 0; i < 120; i++) {
-    const star = document.createElement('div');
-    star.className = 'landing-star';
-    const size = Math.random() * 2.5 + 0.8;
-    star.style.cssText = `
-      width:${size}px; height:${size}px;
-      top:${Math.random()*100}%;
-      left:${Math.random()*100}%;
-      --dur:${(Math.random()*3+2).toFixed(1)}s;
-      --op:${(Math.random()*0.6+0.3).toFixed(2)};
-      animation-delay:${(Math.random()*4).toFixed(1)}s;
-    `;
-    container.appendChild(star);
+function endSession(){ clearState(); cosmosState = { sessionActive:false, school:'', classSection:'', users:[], mcqAnswers:{}, mcqVotes:{}, trainingDone:false, customRules:[], geminiKey:'', speakLang:'en-IN', translateTo:'' }; closePopup('endSessionOverlay'); document.getElementById('appWrapper').style.display='none'; document.getElementById('landingPage').style.display='flex'; showToast("Session ended!"); }
+
+
+// ── Star canvas animation ──
+(function(){
+  const canvas = document.getElementById('starsCanvas');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  let W, H, stars = [];
+  function resize(){ W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+  function initStars(){
+    stars = [];
+    const n = Math.floor((W * H) / 4000);
+    for(let i=0;i<n;i++){
+      stars.push({
+        x:Math.random()*W, y:Math.random()*H,
+        r:Math.random()*1.8+0.2,
+        a:Math.random(),
+        da:(Math.random()*0.006+0.002)*(Math.random()<0.5?1:-1),
+        vx:(Math.random()-0.5)*0.12, vy:(Math.random()-0.5)*0.08
+      });
+    }
   }
-}
-
-function landingEnter(mode) {
-  if (mode === 'live' || mode === 'train') {
-    // show password modal with landing still visible underneath
-    pendingMode = mode;
-    const titles = { live:'🚀 Unlock Live Mode', train:'🧠 Unlock Training Mode' };
-    document.getElementById('pwModalTitle').textContent = titles[mode];
-    document.getElementById('pwLockIcon').textContent = mode === 'train' ? '🔐' : '🚀';
-    document.getElementById('pwInput').value = '';
-    document.getElementById('pwInput').type = 'password';
-    document.getElementById('pwEyeBtn').textContent = '👁️';
-    document.getElementById('pwInput').classList.remove('error');
-    document.getElementById('pwErrorMsg').style.display = 'none';
-    // override verifyPassword success to also dismiss landing
-    pendingFromLanding = true;
-    showPopup('passwordOverlay');
-    setTimeout(() => document.getElementById('pwInput').focus(), 200);
-  } else {
-    dismissLanding(mode);
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    stars.forEach(s=>{
+      s.a+=s.da; if(s.a<=0||s.a>=1) s.da*=-1;
+      s.x+=s.vx; s.y+=s.vy;
+      if(s.x<0) s.x=W; if(s.x>W) s.x=0;
+      if(s.y<0) s.y=H; if(s.y>H) s.y=0;
+      ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+      ctx.fillStyle=`rgba(255,255,255,${s.a})`; ctx.fill();
+    });
+    requestAnimationFrame(draw);
   }
-}
+  window.addEventListener('resize',()=>{ resize(); initStars(); });
+  resize(); initStars(); draw();
+})();
 
-let pendingFromLanding = false;
-
-function dismissLanding(mode) {
-  const landing = document.getElementById('landingPage');
-  landing.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
-  landing.style.opacity = '0';
-  landing.style.transform = 'scale(1.04)';
-  setTimeout(() => {
-    landing.style.display = 'none';
-    document.getElementById('appShell').style.display = 'block';
-    // don't show welcome popup — landing already served that purpose
-    switchMode(mode);
-    spawnSparkles();
-  }, 550);
-}
-
-// ========== INIT ==========
-window.addEventListener('load', () => {
-  generateStars();
-  renderKB();
-  if('speechSynthesis' in window) window.speechSynthesis.getVoices();
-  // do NOT show welcomeOverlay automatically — landing page replaces it
-  document.getElementById('msgInput').addEventListener('input', ()=>{ voiceInputMode = false; });
+window.addEventListener('load',()=>{
+  if(cosmosState.sessionActive&&cosmosState.users&&cosmosState.users.length>0){ activateApp(); }
 });
 </script>
 </body>
