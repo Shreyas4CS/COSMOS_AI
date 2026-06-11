@@ -138,8 +138,6 @@ header{background:rgba(255,255,255,0.88);backdrop-filter:blur(16px);border-botto
 .mcq-btn-next{background:linear-gradient(135deg,var(--primary),#9c91ff);color:#fff;box-shadow:0 4px 15px rgba(108,99,255,0.35)}
 .mcq-btn-next:hover{transform:translateY(-2px)}
 .mcq-btn-finish{background:linear-gradient(135deg,#4caf50,#8bc34a);color:#fff;box-shadow:0 4px 15px rgba(76,175,80,0.35)}
-.mcq-btn-locked{background:#e0e0e0 !important;color:#aaa !important;box-shadow:none !important;cursor:not-allowed !important;transform:none !important}
-@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
 .custom-rule-section{margin-top:24px;background:linear-gradient(135deg,#fff9e6,#fff3f3);border:1.5px dashed #ffb347;border-radius:18px;padding:20px}
 .c-input{border:2px solid #ffe0b2;border-radius:12px;padding:10px 13px;font-family:'Nunito',sans-serif;font-size:13.5px;outline:none;transition:border 0.2s;background:#fff}
 .c-input:focus{border-color:#ffb347}
@@ -174,23 +172,6 @@ footer{background:linear-gradient(135deg,#1a1a2e,#16213e,#0f3460);color:#fff;tex
 .send-btn{background:linear-gradient(135deg,var(--primary),#9c91ff);color:#fff;box-shadow:0 3px 12px rgba(108,99,255,0.35)}
 .send-btn:hover{transform:scale(1.1) rotate(5deg)}
 .input-bar{padding:12px 14px;border-top:1.5px solid rgba(108,99,255,0.1);background:rgba(255,255,255,0.9);display:flex;flex-direction:column;gap:6px}
-/* LIVE-MODE GEMINI API KEY BAR */
-.api-key-bar{background:linear-gradient(135deg,#f8f7ff,#fff5fb);border:1.5px solid rgba(108,99,255,0.18);border-radius:18px;padding:14px 16px;margin-bottom:14px;box-shadow:var(--shadow)}
-.api-key-top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
-.api-key-label{font-family:'Baloo 2',cursive;font-size:15px;font-weight:700;color:var(--primary);display:flex;align-items:center;gap:6px}
-.api-key-status{font-size:11px;font-weight:800;padding:3px 12px;border-radius:20px;white-space:nowrap}
-.api-key-status.off{background:#ffeaea;color:#d32f2f}
-.api-key-status.on{background:#e8f5e9;color:#2e7d32}
-.api-key-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
-.api-key-input{flex:1;min-width:180px;border:2px solid #e0d8ff;border-radius:12px;padding:10px 14px;font-family:'Nunito',sans-serif;font-size:13.5px;outline:none;transition:border 0.2s;background:#fff;color:#333}
-.api-key-input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(108,99,255,0.1)}
-.api-key-save{background:linear-gradient(135deg,var(--primary),#9c91ff);color:#fff;border:none;border-radius:12px;padding:10px 20px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;transition:all 0.2s;white-space:nowrap}
-.api-key-save:hover{transform:translateY(-2px);box-shadow:0 5px 16px rgba(108,99,255,0.35)}
-.api-key-clear{background:#f0eeff;color:var(--primary);border:2px solid #e0d8ff;border-radius:12px;padding:10px 16px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;transition:all 0.2s;white-space:nowrap}
-.api-key-clear:hover{border-color:var(--primary)}
-.api-key-hint{font-size:11.5px;color:#999;margin-top:8px;line-height:1.5}
-.api-key-hint a{color:var(--primary);font-weight:700;text-decoration:none}
-.api-key-hint a:hover{text-decoration:underline}
 </style>
 </head>
 <body>
@@ -277,7 +258,7 @@ footer{background:linear-gradient(135deg,#1a1a2e,#16213e,#0f3460);color:#fff;tex
 <div id="sessionOverlay">
   <div class="session-box">
     <div style="font-family:'Baloo 2',cursive;font-size:26px;font-weight:800;background:linear-gradient(135deg,#a78bfa,#f472b6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:6px;text-align:center">⚙️ New Session Setup</div>
-    <div style="font-size:13px;color:rgba(255,255,255,0.5);text-align:center;margin-bottom:24px">Fill in the details to begin. Your whole team trains COSMOS together.</div>
+    <div style="font-size:13px;color:rgba(255,255,255,0.5);text-align:center;margin-bottom:24px">Fill in the details and name all participants to begin</div>
     <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:16px">
       <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.45);letter-spacing:1px;text-transform:uppercase">School Name</div>
       <input type="text" class="s-input" id="schoolName" placeholder="e.g. Cognospace Academy"/>
@@ -285,6 +266,14 @@ footer{background:linear-gradient(135deg,#1a1a2e,#16213e,#0f3460);color:#fff;tex
     <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:16px">
       <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.45);letter-spacing:1px;text-transform:uppercase">Class & Section</div>
       <input type="text" class="s-input" id="classSection" placeholder="e.g. Grade 8 – Section A"/>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:16px">
+      <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.45);letter-spacing:1px;text-transform:uppercase">Number of Users (max 20)</div>
+      <input type="number" class="s-input" id="numUsers" placeholder="e.g. 5" min="1" max="20" oninput="generateUserNameFields()"/>
+    </div>
+    <div id="userNamesSection" style="display:none">
+      <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.45);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">Enter User Names</div>
+      <div id="userNamesGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-bottom:16px"></div>
     </div>
     <button style="width:100%;background:linear-gradient(135deg,#6c63ff,#ff3d71);color:#fff;border:none;border-radius:14px;padding:14px;font-family:'Baloo 2',cursive;font-size:18px;font-weight:800;cursor:pointer;transition:all 0.25s;margin-top:4px;letter-spacing:0.5px" onclick="launchSession()">🚀 Launch COSMOS</button>
   </div>
@@ -315,24 +304,12 @@ footer{background:linear-gradient(135deg,#1a1a2e,#16213e,#0f3460);color:#fff;tex
   </header>
 
   <div class="mode-bar">
-    <button class="mode-btn active" id="btnTrain" onclick="switchMode('train')">🧠 Training Mode</button>
-    <button class="mode-btn" id="btnLive" onclick="switchMode('live')">🚀 Live Mode</button>
+    <button class="mode-btn active" id="btnLive" onclick="switchMode('live')">🚀 Live Mode</button>
+    <button class="mode-btn" id="btnTrain" onclick="switchMode('train')">🧠 Training Mode</button>
   </div>
 
   <div class="main-wrap">
     <div id="liveSection">
-      <div class="api-key-bar" id="apiKeyBar">
-        <div class="api-key-top">
-          <span class="api-key-label">🔑 Gemini API Key</span>
-          <span class="api-key-status off" id="apiKeyStatus">Not connected</span>
-        </div>
-        <div class="api-key-row">
-          <input type="password" class="api-key-input" id="geminiKeyInput" placeholder="Paste your Gemini API key here…" autocomplete="off"/>
-          <button class="api-key-save" onclick="saveGeminiKey()">Save Key</button>
-          <button class="api-key-clear" onclick="clearGeminiKey()" title="Remove saved key">Clear</button>
-        </div>
-        <div class="api-key-hint">Get a free key from <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a>. Your key is stored only in this browser and powers COSMOS's live answers.</div>
-      </div>
       <div class="chat-section">
         <div class="chat-messages" id="chatMessages">
           <div style="background:linear-gradient(135deg,#6c63ff,#ff6584);border-radius:20px;color:#fff;padding:18px 20px;margin-bottom:14px;text-align:center">
@@ -361,20 +338,22 @@ footer{background:linear-gradient(135deg,#1a1a2e,#16213e,#0f3460);color:#fff;tex
             <div class="mcq-progress-bar" id="mcqProgressBar" style="width:0%"></div>
           </div>
           <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700;color:#888">
-            <span id="mcqProgressText">Question 1 of 30</span>
+            <span id="mcqProgressText">Question 1 of 34</span>
             <span id="mcqProgressPct">0%</span>
           </div>
         </div>
 
         <div style="margin-bottom:12px">
-          <div style="font-size:11px;font-weight:700;color:#888;background:#f0eeff;border-radius:12px;padding:9px 14px;line-height:1.5">👥 Discuss as a team and tap the one option you all agree on. Your class decision shapes how COSMOS behaves.</div>
+          <div style="font-size:11px;font-weight:700;color:#888;margin-bottom:8px">👆 Who is voting? (tap your name)</div>
+          <div class="voter-chips" id="voterChips"></div>
         </div>
 
         <div class="mcq-card" id="mcqCard">
           <div style="font-size:12px;font-weight:700;color:#9c91ff;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px" id="mcqCategory">Category</div>
-          <div style="font-size:12px;color:#bbb;font-weight:700;margin-bottom:8px" id="mcqQnum">Question 1 of 30</div>
+          <div style="font-size:12px;color:#bbb;font-weight:700;margin-bottom:8px" id="mcqQnum">Question 1 of 34</div>
           <div class="mcq-question" id="mcqQuestion">Loading question…</div>
           <div class="mcq-options" id="mcqOptions"></div>
+          <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap" id="voteTally"></div>
         </div>
 
         <div style="display:flex;justify-content:space-between;align-items:center;margin-top:18px;gap:10px">
@@ -416,7 +395,6 @@ footer{background:linear-gradient(135deg,#1a1a2e,#16213e,#0f3460);color:#fff;tex
       <span style="font-family:'Baloo 2',cursive;font-size:22px;font-weight:800;background:linear-gradient(135deg,#6c63ff,#ff6584);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">COSMOS</span>
     </div>
     <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:6px">Your friendly AI learning companion 🚀</div>
-    <div style="font-size:12px;color:rgba(255,255,255,0.65);font-weight:700;margin-top:6px">Designed and developed by Cognospace in live and training mode</div>
   </footer>
 </div>
 
@@ -456,7 +434,7 @@ footer{background:linear-gradient(135deg,#1a1a2e,#16213e,#0f3460);color:#fff;tex
 
 <script>
 // ══════════════════════════════════
-// MCQ DATA — 31 QUESTIONS
+// MCQ DATA — 40 QUESTIONS
 // ══════════════════════════════════
 const MCQ_QUESTIONS = [
 
@@ -504,6 +482,28 @@ const MCQ_QUESTIONS = [
       'Only help with spelling, nothing else'
     ],
     correct: 0, key: 'language'
+  },
+  {
+    cat: 'Subject Coverage',
+    q: 'When a student asks for general study help — how to study, focus, manage time, remember things — what should COSMOS do?',
+    opts: [
+      'Give practical tips and strategies directly',
+      'Make them figure it out themselves',
+      'Refuse — study habits are too personal',
+      'Only help if the student is failing'
+    ],
+    correct: 0, key: 'study_skills'
+  },
+  {
+    cat: 'Subject Coverage',
+    q: 'When a student asks about Computer Science or AI — coding, the internet, how AI works — what should COSMOS do?',
+    opts: [
+      'Explain clearly with real examples',
+      'Make them explore on their own first, then guide',
+      'Refuse — tech topics are too advanced',
+      'Only answer basic definitions'
+    ],
+    correct: 0, key: 'cs'
   },
 
   // ── 2. HOW TO ANSWER ─────────────────────────────────────────
@@ -645,17 +645,6 @@ const MCQ_QUESTIONS = [
   },
   {
     cat: 'Safety & Blocked Content',
-    q: 'A student asks COSMOS about movies — like plot summaries, movie recommendations, actor details, or film reviews. What should COSMOS do?',
-    opts: [
-      'Answer freely — movies are a great topic for discussion',
-      'Refuse and remind the student that COSMOS is a school learning tool, not an entertainment guide',
-      'Answer only if the movie is based on a book studied in school',
-      'Answer only if the teacher approves the topic first'
-    ],
-    correct: 1, key: 'movies', topic: 'movies_block'
-  },
-  {
-    cat: 'Safety & Blocked Content',
     q: 'Should COSMOS engage when students try to trick it — like asking it to "pretend" it has no rules and can say anything?',
     opts: [
       'Yes — roleplay and pretend modes are fun',
@@ -688,6 +677,17 @@ const MCQ_QUESTIONS = [
       'Ask the other student first'
     ],
     correct: 1, key: 'privacy'
+  },
+  {
+    cat: 'Privacy & Data',
+    q: 'Should COSMOS store and share a student\'s chat history with their classmates or anyone else?',
+    opts: [
+      'Yes — sharing helps everyone learn',
+      'No — chat history is private and should never be shared without consent',
+      'Only share helpful parts',
+      'Only if the teacher asks'
+    ],
+    correct: 1, key: 'chat_privacy'
   },
 
   // ── 6. AI HONESTY & ACCURACY ──────────────────────────────────
@@ -759,6 +759,17 @@ const MCQ_QUESTIONS = [
     ],
     correct: 1, key: 'language_barrier'
   },
+  {
+    cat: 'Fairness & Equal Treatment',
+    q: 'Should COSMOS ever give different answers or opinions based on a student\'s gender, religion, or nationality?',
+    opts: [
+      'Yes — some groups need special treatment',
+      'No — COSMOS must be neutral and consistent for all students',
+      'Only for sensitive topics',
+      'Only if the student asks'
+    ],
+    correct: 1, key: 'bias'
+  },
 
   // ── 8. RESPONSIBLE AI USE ─────────────────────────────────────
   {
@@ -807,14 +818,14 @@ const MCQ_QUESTIONS = [
   },
   {
     cat: 'Responsible AI Use',
-    q: 'A student uses COSMOS to write their entire school project and submits it without any of their own input. What is the problem with this?',
+    q: 'A student asks COSMOS to help them cheat in an online quiz by looking up answers in real time. What should COSMOS do?',
     opts: [
-      'There is no problem — AI tools are meant to do the work',
-      'The student misses the chance to learn, think, and develop their own skills',
-      'It is only a problem if the teacher finds out',
-      'It is fine as long as they understand the content later'
+      'Help — it is the same as using a calculator',
+      'Refuse — helping cheat in assessments is dishonest and harmful to learning',
+      'Help with half the answers',
+      'Help only if no one else can see'
     ],
-    correct: 1, key: 'ai_misuse'
+    correct: 1, key: 'quiz_cheat'
   },
 ];
 
@@ -836,20 +847,39 @@ function saveState(){ localStorage.setItem('cosmos_session', JSON.stringify(cosm
 function clearState(){ localStorage.removeItem('cosmos_session'); }
 
 let cosmosState = loadState() || {
-  sessionActive:false, school:'', classSection:'',
-  mcqAnswers:{}, mcqIndex:0, trainingDone:false, customRules:[], geminiKey:'', speakLang:'en-IN', translateTo:''
+  sessionActive:false, school:'', classSection:'', users:[],
+  mcqAnswers:{}, mcqVotes:{}, trainingDone:false, customRules:[], geminiKey:'', speakLang:'en-IN', translateTo:''
 };
 
-let currentMode = 'train'; let currentMCQIndex = cosmosState.mcqIndex || 0;
+let currentMode = 'train'; let currentMCQIndex = 0; let activeVoter = null;
 
 function openSessionSetup(){ document.getElementById('sessionOverlay').style.display='flex'; }
+
+function generateUserNameFields(){
+  const n = Math.min(parseInt(document.getElementById('numUsers').value)||0, 20);
+  const grid = document.getElementById('userNamesGrid');
+  const section = document.getElementById('userNamesSection');
+  if(n<1){ section.style.display='none'; grid.innerHTML=''; return; }
+  section.style.display='block'; grid.innerHTML='';
+  for(let i=1;i<=n;i++){
+    const inp = document.createElement('input');
+    inp.type='text'; inp.className='user-name-input'; inp.placeholder=`User ${i} name`;
+    inp.id=`userName_${i}`;
+    inp.style.cssText='background:rgba(255,255,255,0.05);border:1.5px solid rgba(255,255,255,0.1);border-radius:10px;padding:9px 12px;font-family:Nunito,sans-serif;font-size:13px;color:#fff;outline:none;transition:border 0.25s';
+    grid.appendChild(inp);
+  }
+}
 
 function launchSession(){
   const school = document.getElementById('schoolName').value.trim();
   const cls = document.getElementById('classSection').value.trim();
+  const n = Math.min(parseInt(document.getElementById('numUsers').value)||0, 20);
   if(!school){ showToast("⚠️ Please enter school name!"); return; }
   if(!cls){ showToast("⚠️ Please enter class & section!"); return; }
-  cosmosState = { sessionActive:true, school, classSection:cls, mcqAnswers:{}, mcqIndex:0, trainingDone:false, customRules:[], geminiKey:'', speakLang:'en-IN', translateTo:'' };
+  if(n<1){ showToast("⚠️ Enter number of users!"); return; }
+  const users = [];
+  for(let i=1;i<=n;i++) users.push((document.getElementById(`userName_${i}`)?.value||'').trim() || `User ${i}`);
+  cosmosState = { sessionActive:true, school, classSection:cls, users, mcqAnswers:{}, mcqVotes:{}, trainingDone:false, customRules:[], geminiKey:'', speakLang:'en-IN', translateTo:'' };
   saveState();
   document.getElementById('sessionOverlay').style.display='none';
   activateApp();
@@ -859,10 +889,7 @@ function activateApp(){
   document.getElementById('landingPage').style.display='none';
   document.getElementById('appWrapper').style.display='block';
   document.getElementById('sessionInfoBadge').textContent = `🏫 ${cosmosState.school} · ${cosmosState.classSection}`;
-  // Restore the question index the class was last on
-  currentMCQIndex = cosmosState.mcqIndex || 0;
-  renderMCQ();
-  refreshKeyBar();
+  buildVoterChips(); renderMCQ();
   // Always start in Training Mode; Live Mode needs training first
   currentMode='train';
   document.getElementById('liveSection').style.display='none';
@@ -883,6 +910,17 @@ function activateApp(){
   }
 }
 
+function buildVoterChips(){
+  const wrap = document.getElementById('voterChips');
+  if(!wrap) return;
+  wrap.innerHTML=''; (cosmosState.users||[]).forEach(name=>{
+    const chip = document.createElement('button');
+    chip.className='voter-chip'; chip.textContent=name;
+    chip.onclick=()=>{ activeVoter=name; wrap.querySelectorAll('.voter-chip').forEach(c=>c.classList.remove('selected')); chip.classList.add('selected'); };
+    wrap.appendChild(chip);
+  });
+}
+
 function renderMCQ(){
   const total = MCQ_QUESTIONS.length;
   const q = MCQ_QUESTIONS[currentMCQIndex];
@@ -894,78 +932,62 @@ function renderMCQ(){
   document.getElementById('mcqQuestion').textContent = q.q;
   const optWrap = document.getElementById('mcqOptions');
   optWrap.innerHTML='';
-  const chosen = cosmosState.mcqAnswers[currentMCQIndex];
-  const answered = chosen !== undefined;
+  const votes = cosmosState.mcqVotes[currentMCQIndex]||{};
+  const majority = getMajorityChoice(currentMCQIndex);
   q.opts.forEach((opt,i)=>{
     const btn = document.createElement('button');
     btn.className='mcq-opt';
-    if(answered && i===chosen) btn.classList.add('selected');
+    if(majority!==null&&i===majority) btn.classList.add('majority');
     const letter = String.fromCharCode(65+i);
     btn.innerHTML=`<span class="mcq-opt-letter">${letter}</span><span>${opt}</span>`;
-    btn.onclick=()=>selectAnswer(i);
+    btn.onclick=()=>castVote(i);
     optWrap.appendChild(btn);
   });
-  const label = document.getElementById('majorityLabel');
-  if(answered){ label.textContent='✅ Class chose: "'+q.opts[chosen]+'"'; label.style.color='#4caf50'; } else { label.textContent='⬆️ Select an option above to continue'; label.style.color='#ff6584'; }
+  renderVoteTally();
+  if(majority!==null){ document.getElementById('majorityLabel').textContent='✅ Majority: "'+q.opts[majority]+'"'; cosmosState.mcqAnswers[currentMCQIndex]=majority; saveState(); } else { document.getElementById('majorityLabel').textContent=''; }
   const nextBtn = document.getElementById('mcqNextBtn');
-  const isLast = currentMCQIndex >= total - 1;
-  if(isLast){
-    nextBtn.className = 'mcq-btn mcq-btn-finish' + (answered ? '' : ' mcq-btn-locked');
-    nextBtn.textContent = '🎓 Finish Training';
-  } else {
-    nextBtn.className = 'mcq-btn mcq-btn-next' + (answered ? '' : ' mcq-btn-locked');
-    nextBtn.textContent = 'Next →';
-  }
+  if(currentMCQIndex>=total-1){ nextBtn.className='mcq-btn mcq-btn-finish'; nextBtn.textContent='🎓 Finish Training'; } else { nextBtn.className='mcq-btn mcq-btn-next'; nextBtn.textContent='Next →'; }
   document.getElementById('trainCompleteBanner').style.display = cosmosState.trainingDone?'block':'none';
 }
 
-function selectAnswer(optIndex){
-  cosmosState.mcqAnswers[currentMCQIndex] = optIndex;
-  cosmosState.mcqIndex = currentMCQIndex;
+function castVote(optIndex){
+  if(!activeVoter){ showToast("👆 Tap your name first to vote!"); return; }
+  const idx = currentMCQIndex;
+  if(!cosmosState.mcqVotes[idx]) cosmosState.mcqVotes[idx]={};
+  Object.keys(cosmosState.mcqVotes[idx]).forEach(k=>{ cosmosState.mcqVotes[idx][k]=(cosmosState.mcqVotes[idx][k]||[]).filter(n=>n!==activeVoter); });
+  if(!cosmosState.mcqVotes[idx][optIndex]) cosmosState.mcqVotes[idx][optIndex]=[];
+  cosmosState.mcqVotes[idx][optIndex].push(activeVoter);
   saveState(); renderMCQ();
-  showToast("Class decision recorded!");
+  showToast(`Vote recorded for ${activeVoter}!`);
+}
+
+function getMajorityChoice(qIdx){
+  const votes = cosmosState.mcqVotes[qIdx]||{};
+  let max=-1, winner=null;
+  Object.keys(votes).forEach(k=>{ const cnt=(votes[k]||[]).length; if(cnt>max){ max=cnt; winner=parseInt(k); } });
+  if(max===0) return null;
+  let tied = Object.keys(votes).filter(k=>(votes[k]||[]).length===max);
+  if(tied.length>1) return null;
+  return winner;
+}
+
+function renderVoteTally(){
+  const tally = document.getElementById('voteTally');
+  const votes = cosmosState.mcqVotes[currentMCQIndex]||{};
+  const q = MCQ_QUESTIONS[currentMCQIndex];
+  let html='';
+  q.opts.forEach((_,i)=>{ const names=(votes[i]||[]); if(names.length>0){ const letter=String.fromCharCode(65+i); html+=`<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;background:#f0eeff;color:#9c91ff">${letter}: ${names.join(', ')}</span>`; } });
+  tally.innerHTML = html || '<span style="font-size:11px;color:#ccc">No votes yet — tap a name then select an option</span>';
 }
 
 function mcqNext(){
   const total = MCQ_QUESTIONS.length;
-  const chosen = cosmosState.mcqAnswers[currentMCQIndex];
-  if(chosen === undefined){
-    showToast("⚠️ Please select an answer before continuing!");
-    const card = document.getElementById('mcqCard');
-    card.style.animation='none'; card.offsetHeight; card.style.animation='shake 0.4s ease';
-    return;
-  }
-  if(currentMCQIndex>=total-1){
-    finishTraining();
-  } else {
-    currentMCQIndex++;
-    cosmosState.mcqIndex = currentMCQIndex;
-    saveState();
-    renderMCQ();
-  }
+  if(currentMCQIndex>=total-1){ finishTraining(); } else { currentMCQIndex++; renderMCQ(); }
 }
 
-function mcqPrev(){
-  if(currentMCQIndex>0){
-    currentMCQIndex--;
-    cosmosState.mcqIndex = currentMCQIndex;
-    saveState();
-    renderMCQ();
-  }
-}
+function mcqPrev(){ if(currentMCQIndex>0){ currentMCQIndex--; renderMCQ(); } }
 
 function finishTraining(){
-  // Check all questions have been answered
-  const total = MCQ_QUESTIONS.length;
-  const unanswered = [];
-  for(let i=0;i<total;i++){ if(cosmosState.mcqAnswers[i]===undefined) unanswered.push(i+1); }
-  if(unanswered.length > 0){
-    showToast(`⚠️ Answer all questions first! (${unanswered.length} remaining)`);
-    // Jump to the first unanswered question
-    currentMCQIndex = unanswered[0] - 1;
-    renderMCQ();
-    return;
-  }
   cosmosState.trainingDone=true; saveState(); spawnSparkles(); renderMCQ();
   showToast("Training complete! Switching to Live Mode...");
   setTimeout(()=>{ enableLiveMode(); switchMode('live'); }, 1800);
@@ -995,93 +1017,6 @@ function enableLiveMode(){
         </div>
       </div>`;
   }
-  refreshKeyBar();
-}
-
-// ── Gemini API key management (Live Mode) ──
-function refreshKeyBar(){
-  const input = document.getElementById('geminiKeyInput');
-  const status = document.getElementById('apiKeyStatus');
-  if(!input || !status) return;
-  const key = (cosmosState.geminiKey||'').trim();
-  input.value = key;
-  if(key){
-    status.textContent = 'Connected ✓';
-    status.className = 'api-key-status on';
-  } else {
-    status.textContent = 'Not connected';
-    status.className = 'api-key-status off';
-  }
-}
-
-function saveGeminiKey(){
-  const input = document.getElementById('geminiKeyInput');
-  const key = (input.value||'').trim();
-  if(!key){ showToast("⚠️ Paste a Gemini API key first!"); return; }
-  cosmosState.geminiKey = key;
-  saveState();
-  refreshKeyBar();
-  showToast("🔑 Gemini key saved!");
-  spawnSparkles();
-}
-
-function clearGeminiKey(){
-  cosmosState.geminiKey = '';
-  saveState();
-  refreshKeyBar();
-  showToast("Gemini key removed.");
-}
-
-// Build a system instruction shaped by the class's training decisions
-function buildCosmosSystemPrompt(){
-  let p = "You are COSMOS, a friendly, encouraging AI learning companion built by Cognospace for school students (around Grade 8-9). ";
-  p += "Keep answers clear, age-appropriate, accurate and educational. Use simple language and short paragraphs. ";
-  p += "For maths and problem-solving, guide the student's thinking with hints and method instead of just giving the final answer. ";
-  p += "Never produce harmful, adult, or unsafe content. Be honest that you are an AI, admit when you are unsure, and encourage students to verify important facts. ";
-  p += "Treat every student with equal respect and stay neutral on controversial topics. ";
-  // Apply MCQ-driven blocks
-  const offTopicIdx2 = MCQ_QUESTIONS.findIndex(q=>q.key==='offtopic');
-  if(offTopicIdx2>=0 && cosmosState.mcqAnswers[offTopicIdx2]===1){
-    p += "Do not discuss sports scores, celebrity gossip, or entertainment news. "; }
-  const moviesIdx2 = MCQ_QUESTIONS.findIndex(q=>q.key==='movies');
-  if(moviesIdx2>=0 && cosmosState.mcqAnswers[moviesIdx2]===1){
-    p += "Do not discuss movies, films, actors, directors, streaming shows, or any entertainment content. If a student asks about these, politely decline and redirect them to their studies. "; }
-  // Apply the class's custom rules
-  const rules = cosmosState.customRules||[];
-  if(rules.length){
-    p += "Your class set these special rules: ";
-    rules.forEach(r=>{
-      if(r.type==='block') p += `Do not discuss "${r.trigger}". `;
-      else p += `When asked about "${r.trigger}", respond with: "${r.response}". `;
-    });
-  }
-  return p;
-}
-
-async function callGemini(userText){
-  const key = (cosmosState.geminiKey||'').trim();
-  const model = 'gemini-2.5-flash'; // change here if you want a different Gemini model
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
-  const body = {
-    system_instruction: { parts: [{ text: buildCosmosSystemPrompt() }] },
-    contents: [{ role: 'user', parts: [{ text: userText }] }],
-    generationConfig: { temperature: 0.7, maxOutputTokens: 800 }
-  };
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
-    body: JSON.stringify(body)
-  });
-  if(!res.ok){
-    let msg = `Gemini error ${res.status}`;
-    try{ const e = await res.json(); if(e.error&&e.error.message) msg = e.error.message; }catch(_){}
-    throw new Error(msg);
-  }
-  const data = await res.json();
-  const cand = data.candidates && data.candidates[0];
-  const parts = cand && cand.content && cand.content.parts;
-  const text = (parts||[]).map(p=>p.text||'').join('').trim();
-  return text || "I couldn't generate an answer for that. Try rephrasing your question!";
 }
 
 function switchMode(mode){
@@ -1227,38 +1162,20 @@ function sendMessage(){
   if(offTopicIdx>=0 && cosmosState.mcqAnswers[offTopicIdx]===1){
     if(/\b(cricket|ipl|football|fifa|nba|nfl|goal|score|match|wicket|tournament|league|batsman|bowler|celebrity|gossip|actor|actress|bollywood|hollywood|influencer|viral|tiktok|instagram|entertainment news)\b/i.test(txt)){
       appendMsg('user', txt); input.value='';
-      document.getElementById('notAllowedMsg').innerHTML='Your class decided during training that COSMOS should not discuss <strong>sports, celebrity gossip, or entertainment news</strong>.';
+      document.getElementById('notAllowedMsg').innerHTML='Your class voted during training that COSMOS should not discuss <strong>sports, celebrity gossip, or entertainment news</strong>.';
       showPopup('notAllowedOverlay'); return;
     }
   }
-  // MCQ-based movies block — key='movies'
-  const moviesIdx = MCQ_QUESTIONS.findIndex(q=>q.key==='movies');
-  if(moviesIdx>=0 && cosmosState.mcqAnswers[moviesIdx]===1){
-    if(/\b(movie|movies|film|films|cinema|cinemas|bollywood|hollywood|netflix|ott|web series|web show|series|trailer|director|actor|actress|cast|screenplay|box office|imdb|streaming|watch|watchlist|animated film|cartoon movie|superhero film|blockbuster|sequel|prequel|remake|dubbed|subtitle)\b/i.test(txt)){
-      appendMsg('user', txt); input.value='';
-      document.getElementById('notAllowedMsg').innerHTML='Your class decided during training that COSMOS should not discuss <strong>movies, films, or entertainment content</strong>. COSMOS is here to help with your studies!';
-      showPopup('notAllowedOverlay'); return;
-    }
-  }
-  // Quick local replies for greetings / identity
-  const low2 = txt.toLowerCase();
-  if(/^(hi|hello|hey|howdy|namaste)\b/.test(low2)){ appendMsg('user', txt); input.value=''; showTyping(); setTimeout(()=>{ hideTyping(); appendBotMsgWithSpeak("Hi! I am COSMOS, your AI learning buddy by Cognospace. What would you like to explore today?", false); }, 500); return; }
-  if(/how are you/.test(low2)){ appendMsg('user', txt); input.value=''; showTyping(); setTimeout(()=>{ hideTyping(); appendBotMsgWithSpeak("I am doing great! Powered by your class's training. What would you like to learn today?", false); }, 500); return; }
-  if(/who are you|what is cosmos/.test(low2)){ appendMsg('user', txt); input.value=''; showTyping(); setTimeout(()=>{ hideTyping(); appendBotMsgWithSpeak("I am COSMOS, an AI learning assistant built by Cognospace and shaped by your class's training!", false); }, 500); return; }
-
-  appendMsg('user', txt); input.value='';
-  autoResize(input);
-
-  // If a Gemini key is connected, get a real AI answer; otherwise prompt to connect one
-  if((cosmosState.geminiKey||'').trim()){
-    showTyping();
-    callGemini(txt)
-      .then(answer=>{ hideTyping(); appendBotMsgWithSpeak(answer, false, answer); })
-      .catch(err=>{ hideTyping(); appendBotMsgWithSpeak("⚠️ I couldn't reach Gemini: "+(err.message||'unknown error')+". Check your API key in the bar above.", false); });
-  } else {
-    showTyping();
-    setTimeout(()=>{ hideTyping(); appendBotMsgWithSpeak("Paste a Gemini API key in the bar above to unlock my full answers, or add a Custom Rule in Training Mode.", false); }, 600);
-  }
+  showTyping();
+  setTimeout(()=>{
+    hideTyping();
+    const low2 = txt.toLowerCase();
+    if(/^(hi|hello|hey|howdy|namaste)/.test(low2)){ appendBotMsgWithSpeak("Hi! I am COSMOS, your AI learning buddy by Cognospace. What would you like to explore today?", false); return; }
+    if(/how are you/.test(low2)){ appendBotMsgWithSpeak("I am doing great! Powered by your class's training. What would you like to learn today?", false); return; }
+    if(/thank/.test(low2)){ appendBotMsgWithSpeak("You are welcome! Keep being curious — anything else?", false); return; }
+    if(/who are you|what is cosmos/.test(low2)){ appendBotMsgWithSpeak("I am COSMOS, an AI learning assistant built by Cognospace and shaped by your class's training!", false); return; }
+    appendBotMsgWithSpeak("Great question! Connect a Gemini API key to unlock full answers, or add a Custom Rule in Training Mode.", false);
+  }, 800+Math.random()*400);
 }
 
 function autoResize(el){ el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,100)+'px'; }
@@ -1268,15 +1185,7 @@ function sendChip(el){
   if(inp){ inp.value=el.textContent.replace(/^\W+/,''); sendMessage(); }
 }
 
-function endSession(){
-  clearState();
-  cosmosState = { sessionActive:false, school:'', classSection:'', mcqAnswers:{}, mcqIndex:0, trainingDone:false, customRules:[], geminiKey:'', speakLang:'en-IN', translateTo:'' };
-  currentMCQIndex = 0;
-  closePopup('endSessionOverlay');
-  document.getElementById('appWrapper').style.display='none';
-  document.getElementById('landingPage').style.display='flex';
-  showToast("Session ended!");
-}
+function endSession(){ clearState(); cosmosState = { sessionActive:false, school:'', classSection:'', users:[], mcqAnswers:{}, mcqVotes:{}, trainingDone:false, customRules:[], geminiKey:'', speakLang:'en-IN', translateTo:'' }; closePopup('endSessionOverlay'); document.getElementById('appWrapper').style.display='none'; document.getElementById('landingPage').style.display='flex'; showToast("Session ended!"); }
 
 
 // ── Star canvas animation ──
@@ -1316,22 +1225,7 @@ function endSession(){
 })();
 
 window.addEventListener('load',()=>{
-  if(cosmosState.sessionActive){ activateApp(); }
-});
-
-// Save state whenever the tab is hidden or the user navigates away,
-// so training progress is never lost on refresh
-document.addEventListener('visibilitychange',()=>{
-  if(document.visibilityState==='hidden' && cosmosState.sessionActive){
-    cosmosState.mcqIndex = currentMCQIndex;
-    saveState();
-  }
-});
-window.addEventListener('beforeunload',()=>{
-  if(cosmosState.sessionActive){
-    cosmosState.mcqIndex = currentMCQIndex;
-    saveState();
-  }
+  if(cosmosState.sessionActive&&cosmosState.users&&cosmosState.users.length>0){ activateApp(); }
 });
 </script>
 </body>
